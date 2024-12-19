@@ -39,6 +39,7 @@ public class Practical5 {
         }
     }
 
+    //printing the array
     public static void printArray(int[] array) {
         for (int num : array) {
             System.out.print(num + " ");
