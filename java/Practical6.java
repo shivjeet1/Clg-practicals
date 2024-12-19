@@ -1,28 +1,37 @@
-// Base class
-class Animal {
-    // Method to be overridden
-    public void sound() {
-        System.out.println("Animal makes a sound");
-    }
-}
-
-// Subclass
-class Dog extends Animal {
-    // Overriding the sound() method
-    @Override
-    public void sound() {
-        System.out.println("Dog barks");
-    }
-}
-
 public class Practical6 {
     public static void main(String[] args) {
-        // Create an instance of Animal
-        Animal myAnimal = new Animal();
-        myAnimal.sound(); // Calls the Animal's sound method
+        Car mclaren = new Mclaren();
+        mclaren.drive(); // Calls the overridden method in Mclaren
+        mclaren.brake(); // Calls the inherited method from Car
+        mclaren.accelerate(); // Calls the inherited method from Car
+    }
+}
 
-        // Create an instance of Dog
-        Animal myDog = new Dog();
-        myDog.sound(); // Calls the Dog's overridden sound method
+class Car {
+    // Superclass methods
+    void drive() {
+        System.out.println("Driving at a normal speed");
+    }
+
+    void brake() {
+        System.out.println("Braking");
+    }
+
+    void accelerate() {
+        System.out.println("Accelerating at a steady pace");
+    }
+}
+
+// Subclass Mclaren overrides the drive() method
+class Mclaren extends Car {
+    @Override
+    void drive() {
+        System.out.println("Driving at a super-fast speed");
+    }
+
+    // Optional: can override other methods if needed
+    @Override
+    void accelerate() {
+        System.out.println("Accelerating rapidly with turbo power");
     }
 }
