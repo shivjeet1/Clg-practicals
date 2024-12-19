@@ -20,6 +20,7 @@ public class Practical8 {
 
         System.out.print("Enter the denominator: ");
         int den = scanner.nextInt();
+        System.out.println("");
 
         divide(num, den);
     }
