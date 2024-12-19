@@ -1,7 +1,6 @@
 interface Engine {
     void startEngine();
 }
-
 interface SafetyFeatures {
     void enableAirbags();
 }
