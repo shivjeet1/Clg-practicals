@@ -1,0 +1,12 @@
+# ============================================================
+#  EXPERIMENT 1 : Study of Forensics Tools
+#  Inventory of the forensic tool chain used in this lab
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+
+./scripts/tool_inventory.sh
+
+# --- where each binary actually comes from ---
+echo
+echo "----- binaries in the local prefix -----"
+ls -1 "$PWD/tools/usr/bin" | head -25

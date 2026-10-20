@@ -1,0 +1,19 @@
+# ============================================================
+#  EXPERIMENT 4 : Creating a Forensic Image
+#  Verifying that the image is identical to the original medium
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp4
+
+# --- 3. the hash produced during the imaging run ---
+cat image_hash.txt
+
+# --- 4. hash the source and the image again, independently ---
+sha256sum usb_drive.img forensic_image.dd
+
+# --- 5. byte-by-byte comparison of the copy and the original ---
+cmp usb_drive.img forensic_image.dd && echo "RESULT: the image is identical to the original medium"
+
+# --- 6. size and geometry of the image ---
+img_stat forensic_image.dd
+ls -l forensic_image.dd

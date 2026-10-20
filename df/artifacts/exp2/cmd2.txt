@@ -1,0 +1,19 @@
+# ============================================================
+#  EXPERIMENT 2 : Recovery of Deleted Files
+#  Deleting the files - the directory entry goes, the data stays
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp2
+
+# --- delete the four files from the stick ---
+mdel -i usb_drive.img ::case_note.txt
+mdel -i usb_drive.img ::evidence_log.txt
+mdel -i usb_drive.img ::usb_readme.txt
+mdel -i usb_drive.img ::photo_evidence.jpg
+
+echo "----- directory listing after deletion -----"
+mdir -i usb_drive.img ::
+
+# --- the bytes are still on the media, only the directory entry is gone ---
+echo "----- raw strings still present in the image -----"
+strings -n 25 usb_drive.img | grep -m3 -E 'CASE NOTE|Evidence log line 001|Removable media found'

@@ -1,0 +1,18 @@
+# ============================================================
+#  EXPERIMENT 6 : Browser Artefacts
+#  Bookmarks, cache contents and the total number of artefacts
+# ============================================================
+cd artifacts/exp6
+
+echo "----- 4. bookmarks (moz_bookmarks -> moz_places) -----"
+sqlite3 -header -column working/places.sqlite "SELECT substr(p.url,1,46) AS url, substr(b.title,1,26) AS title FROM moz_bookmarks b JOIN moz_places p ON b.fk=p.id WHERE b.type=1 LIMIT 5;"
+
+echo
+echo "----- 5. cached pages (cache2/entries) -----"
+CACHE="$HOME/.cache/mozilla/firefox/096bfjji.default-release/cache2/entries"
+echo "cache entries : $(ls "$CACHE" 2>/dev/null | wc -l)"
+ls "$CACHE" 2>/dev/null | head -5
+
+echo
+echo "----- 6. total browser artefacts recovered -----"
+sqlite3 working/places.sqlite "SELECT 'history entries : ' || count(*) FROM moz_places UNION ALL SELECT 'visits          : ' || count(*) FROM moz_historyvisits UNION ALL SELECT 'bookmarks       : ' || count(*) FROM moz_bookmarks;"

@@ -1,0 +1,25 @@
+# ============================================================
+#  EXPERIMENT 2 : Recovery of Deleted Files
+#  Recovery with The Sleuth Kit (exact, inode based recovery)
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp2
+
+# --- 1. list the deleted entries that are still in the FAT directory ---
+fls -r -d -f fat32 usb_drive.img
+
+# --- 2. metadata of a deleted file (inode 5 = case_note.txt) ---
+istat -f fat32 usb_drive.img 5
+
+# --- 3. extract each deleted file by its inode ---
+mkdir -p recovered_tsk
+icat -f fat32 usb_drive.img 5  > recovered_tsk/case_note.txt
+icat -f fat32 usb_drive.img 8  > recovered_tsk/evidence_log.txt
+icat -f fat32 usb_drive.img 11 > recovered_tsk/usb_readme.txt
+icat -f fat32 usb_drive.img 14 > recovered_tsk/photo_evidence.jpg
+ls -l recovered_tsk/
+
+# --- 4. integrity check against the hashes taken before deletion ---
+cd recovered_tsk
+sha256sum -c ../hashes_before.txt
+cd ..

@@ -1,0 +1,23 @@
+# ============================================================
+#  EXPERIMENT 5 : Volatile Memory (RAM) Capture
+#  Extracting e-mail / URL / document artefacts from the dump
+#  (the scanners bulk_extractor performs on a full LiME image)
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp5
+
+echo "----- 1. e-mail addresses found in RAM -----"
+strings -n 6 ram_dump.raw | grep -oE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | sort -u
+
+echo
+echo "----- 2. URLs found in RAM -----"
+strings -n 6 ram_dump.raw | grep -oE 'https?://[^ "]+' | sort -u
+
+echo
+echo "----- 3. credential material found in RAM -----"
+strings -n 6 ram_dump.raw | grep -oE 'Suspect@[A-Za-z0-9]+' | sort -u
+strings -n 6 ram_dump.raw | grep -ciE 'passw'
+
+echo
+echo "----- 4. document / chat content found in RAM -----"
+strings -n 20 ram_dump.raw | grep -m3 -E 'Meeting notes|never reached Talegaon'

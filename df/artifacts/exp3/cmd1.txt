@@ -1,0 +1,29 @@
+# ============================================================
+#  EXPERIMENT 3 : EXIF Data Extraction
+#  Photograph taken with a camera (full EXIF) vs. the same picture
+#  after it has been uploaded to / downloaded from a social network
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp3
+
+# --- 1. the original picture straight from the camera ---
+ls -l IMG_0001.jpg
+
+# --- 2. write the EXIF block the camera would have stored ---
+exiftool \
+  -Make="Canon" \
+  -Model="Canon EOS 2000D" \
+  -LensModel="EF-S18-55mm f/3.5-5.6 IS STM" \
+  -Software="Canon EOS Utility 2.8" \
+  -DateTimeOriginal="2026:10:18 14:32:07" \
+  -CreateDate="2026:10:18 14:32:07" \
+  -ModifyDate="2026:10:18 14:32:07" \
+  -GPSLatitude=18.5204 -GPSLatitudeRef=N \
+  -GPSLongitude=73.8567 -GPSLongitudeRef=E \
+  -GPSAltitude=560.4 -GPSAltitudeRef=0 \
+  -GPSDateStamp="2026:10:18" -GPSTimeStamp="10:02:05" \
+  -XMP:Creator="unknown" \
+  IMG_0001.jpg
+
+echo "----- metadata now stored in the file -----"
+exiftool -Make -Model -LensModel -DateTimeOriginal -CreateDate -GPSPosition -GPSLatitude -GPSLongitude -GPSAltitude IMG_0001.jpg

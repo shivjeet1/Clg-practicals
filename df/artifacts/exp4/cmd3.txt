@@ -1,0 +1,15 @@
+# ============================================================
+#  EXPERIMENT 4 : Creating a Forensic Image
+#  The image behaves exactly like the physical device
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp4
+
+# --- 7. file system inside the image ---
+fsstat forensic_image.dd
+
+# --- 8. the deleted files of the original medium are visible in the image ---
+fls -r -d -f fat32 forensic_image.dd
+
+# --- 9. content of a deleted file straight out of the image ---
+icat -f fat32 forensic_image.dd 5

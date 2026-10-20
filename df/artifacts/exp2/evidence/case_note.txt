@@ -1,0 +1,6 @@
+CASE NOTE - DF-2026-014
+Date: 20-10-2026   Officer: A. Sharma
+Subject laptop seized from R. Kulkarni, Talegaon.
+Observation: red backpack found near the desk, passport of another name inside.
+Evidence bagged as E-07 (passport photocopy) and E-08 (red backpack).
+Next step: recover deleted files from the seized USB stick (USBDrive, 256 MB, FAT32).
