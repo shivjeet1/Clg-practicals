@@ -1,0 +1,27 @@
+# The locally installed forensic tool chain (rootless prefix) - not part of the report
+tools/
+tools/.cache/
+
+# Working files of the experiments: the large binaries are re-creatable with the
+# scripts in scripts/, the small ones are kept as evidence of the experiment.
+artifacts/exp2/usb_drive.img
+artifacts/exp2/carved.*/
+artifacts/exp2/recovered_tsk/
+artifacts/exp4/usb_drive.img
+artifacts/exp4/forensic_image.dd
+artifacts/exp4/test.dd
+artifacts/exp4/test_hash.txt
+artifacts/exp5/ram_dump.raw
+artifacts/exp6/working/
+artifacts/exp7/
+artifacts/exp8/case/export/recovered/
+artifacts/exp8/case/export/tsk.db
+artifacts/exp8/case/evidence/
+
+artifacts/exp8/autopsy_case/
+artifacts/exp8/autopsy_case*/
+__pycache__/
+artifacts/exp2/carved*/
+artifacts/exp2/carved.*/
+artifacts/exp2/hashed/
+artifacts/exp2/photorec.log

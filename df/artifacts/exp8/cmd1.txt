@@ -1,0 +1,20 @@
+# ============================================================
+#  EXPERIMENT 8 : Live Case Investigation
+#  Case DF-2026-014 - the forensic image of Exp. 4 is ingested
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp8
+
+echo "----- 1. the case directory -----"
+find case -maxdepth 2 -type d | sort
+ls -l case/evidence/
+
+echo
+echo "----- 2. data source: the image is hashed before it is examined -----"
+cat case/logs/data_source.sha256
+sha256sum case/evidence/forensic_image.dd
+
+echo
+echo "----- 3. file system database of the case (tsk_loaddb) -----"
+sqlite3 case/export/tsk.db "SELECT COUNT(*) || ' objects in the case database' FROM tsk_files;"
+sqlite3 case/export/tsk.db "SELECT name || '  (' || size || ' bytes, modified ' || datetime(mtime,'unixepoch') || ')' FROM tsk_files WHERE meta_type = 1 AND name != '' ORDER BY mtime;"

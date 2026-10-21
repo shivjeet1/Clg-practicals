@@ -1,0 +1,26 @@
+# ============================================================
+#  EXPERIMENT 6 : Browser Artefacts
+#  Acquiring the Firefox history / download databases
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp6
+
+PROFILE="$HOME/.config/mozilla/firefox/096bfjji.default-release"
+
+# --- 1. where the browser keeps its history ---
+echo "----- firefox profile -----"
+ls -la "$PROFILE" | grep -E 'places|cookies|formhistory|downloads'
+echo
+echo "----- cache directory -----"
+ls "$HOME/.cache/mozilla/firefox/096bfjji.default-release/cache2/entries" 2>/dev/null | head -3
+echo "cache entries: $(ls "$HOME/.cache/mozilla/firefox/096bfjji.default-release/cache2/entries" 2>/dev/null | wc -l)"
+
+# --- 2. work on a COPY, never on the live database ---
+mkdir -p working
+cp "$PROFILE/places.sqlite"      working/
+cp "$PROFILE/places.sqlite-wal"  working/ 2>/dev/null
+ls -l working/
+sha256sum working/places.sqlite
+
+# --- 3. the tables inside the history database ---
+sqlite3 working/places.sqlite ".tables"

@@ -1,0 +1,16 @@
+# ============================================================
+#  EXPERIMENT 6 : Browser Artefacts
+#  Reading the history, the bookmarks and the download list
+# ============================================================
+cd artifacts/exp6
+
+echo "----- 1. most recently visited pages -----"
+sqlite3 -header -column working/places.sqlite "SELECT substr(url,1,56) AS url, visit_count, datetime(last_visit_date/1000000,'unixepoch','localtime') AS last_visit FROM moz_places WHERE last_visit_date IS NOT NULL AND url NOT LIKE '%code=%' ORDER BY last_visit_date DESC LIMIT 7;"
+
+echo
+echo "----- 2. the most visited domains -----"
+sqlite3 -header -column working/places.sqlite "SELECT substr(url, 1, instr(substr(url,9),'/')+7) AS domain, count(*) AS hits FROM moz_places WHERE url LIKE 'http%' GROUP BY domain ORDER BY hits DESC LIMIT 6;"
+
+echo
+echo "----- 3. download history (moz_annos) -----"
+sqlite3 -header -column working/places.sqlite "SELECT substr(p.url,1,40) AS source, substr(a.content,1,36) AS file, datetime(a.dateAdded/1000000,'unixepoch','localtime') AS downloaded FROM moz_annos a JOIN moz_anno_attributes aa ON a.anno_attribute_id=aa.id JOIN moz_places p ON a.place_id=p.id WHERE aa.name='downloads/destinationFileURI' ORDER BY a.dateAdded DESC LIMIT 5;"

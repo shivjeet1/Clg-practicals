@@ -1,0 +1,18 @@
+# ============================================================
+#  EXPERIMENT 3 : EXIF Data Extraction
+#  The social-network copy of the same picture + a picture from the web
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp3
+
+# --- 1. the same picture after an upload to a social network ---
+# social platforms re-encode every upload and throw the EXIF/XMP blocks away
+magick IMG_0001.jpg -strip -quality 82 IMG_0001_social.jpg
+ls -l IMG_0001.jpg IMG_0001_social.jpg
+
+# --- 2. a picture downloaded from a web service ---
+curl -sL -o downloaded_from_web.jpg "https://picsum.photos/1200/800"
+ls -l downloaded_from_web.jpg
+
+# --- 3. hash all three files before looking at their content ---
+sha256sum IMG_0001.jpg IMG_0001_social.jpg downloaded_from_web.jpg

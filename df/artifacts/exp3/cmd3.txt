@@ -1,0 +1,17 @@
+# ============================================================
+#  EXPERIMENT 3 : EXIF Data Extraction
+#  Full metadata of the camera original and of the social-network copy
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp3
+
+echo "================= 1. ORIGINAL FROM THE CAMERA ================="
+exiftool -a -u -gps:all -time:all IMG_0001.jpg
+
+echo
+echo "================= 2. AFTER THE SOCIAL NETWORK ================="
+exiftool -a -u -gps:all -time:all IMG_0001_social.jpg
+
+echo
+echo "================= 3. DOWNLOADED FROM A WEB SERVICE ================="
+exiftool -a -u -gps:all -time:all downloaded_from_web.jpg

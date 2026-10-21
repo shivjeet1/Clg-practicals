@@ -1,0 +1,17 @@
+# ============================================================
+#  EXPERIMENT 4 : Creating a Forensic Image
+#  Bit-stream copy of the evidence device + hashing while copying
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp4
+
+# --- 1. identify the evidence device ---
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL
+echo
+echo "----- partition table of the seized media -----"
+fdisk -l usb_drive.img
+
+# --- 2. write-protected bit-stream copy, hashed during the copy ---
+# dcfldd = "dd with hashing": the SHA-256 of the image is produced while the
+# bytes are being copied, so the copy and its hash are guaranteed consistent.
+dcfldd if=usb_drive.img of=forensic_image.dd hash=sha256 hashlog=image_hash.txt 2>&1 | tr '\r' '\n' | tail -3

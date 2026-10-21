@@ -1,0 +1,29 @@
+# ============================================================
+#  EXPERIMENT 8 : Live Case Investigation
+#  Ingest modules: file extraction, type identification, keyword search
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp8
+
+echo "----- 4. file extraction (tsk_recover, allocated + deleted) -----"
+find case/export/recovered -type f | sort
+ls -l case/export/recovered/
+
+echo
+echo "----- 5. file type identification -----"
+find case/export/recovered -type f -exec file -b {} \; | sort | uniq -c | sort -rn
+
+echo
+echo "----- 6. keyword search -----"
+### BLOCK
+for kw in "Talegaon" "DF-2026-014" "red backpack" "USBDrive"; do
+    n=$(grep -ril "$kw" case/export/recovered 2>/dev/null | wc -l)
+    printf 'keyword %-14s : %s hit(s)\n' "$kw" "$n"
+done
+echo
+grep -ril "Talegaon" case/export/recovered 2>/dev/null
+### ENDBLOCK
+
+echo
+echo "----- 7. content of the recovered note -----"
+head -5 case/export/recovered/case_note.txt

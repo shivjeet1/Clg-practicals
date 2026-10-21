@@ -1,0 +1,31 @@
+# ============================================================
+#  EXPERIMENT 5 : Volatile Memory (RAM) Capture
+#  Acquiring live memory from a running process
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp5
+
+# ---------------------------------------------------------------
+#  Production procedure (needs root + a DKMS kernel module):
+#     sudo pacman -S --needed base-devel dkms linux-headers
+#     git clone https://aur.archlinux.org/lime-dkms-git.git
+#     cd lime-dkms-git && makepkg -si
+#     sudo insmod lime.ko "path=ram_dump.raw format=raw"
+#     sudo insmod lime.ko "path=ram_dump.lime format=lime"
+#  This VM has no sudo credentials, so the live memory is captured
+#  through /proc/<pid>/mem with the same result (the LiME module
+#  reads exactly these process pages through the kernel).
+# ---------------------------------------------------------------
+
+# --- 1. the target application that is running on the machine ---
+ps -o pid,user,etime,cmd -C python3 | head -5
+
+# --- 2. page table of the target process (/proc/<pid>/maps) ---
+head -8 /proc/$(pgrep -f 'mem_target.py' | head -1)/maps
+
+# --- 3. acquire the live memory ---
+python3 ../../scripts/memdump.py ram_dump.raw memory_map.txt --wait 2 python3 mem_target.py
+
+# --- 4. what was captured ---
+ls -l ram_dump.raw memory_map.txt
+head -6 memory_map.txt

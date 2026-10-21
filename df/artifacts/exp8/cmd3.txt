@@ -1,0 +1,17 @@
+# ============================================================
+#  EXPERIMENT 8 : Live Case Investigation
+#  Recent Activity module: the timeline and the case report
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp8
+
+echo "----- 8. activity timeline built with mactime -----"
+column -s, -t case/export/timeline.csv | head -12
+
+echo
+echo "----- 9. the generated case report -----"
+ls -l case/reports/
+grep -oE '<h2>[^<]+</h2>' case/reports/case_report.html
+echo
+echo "report sections:"
+grep -cE '<tr>' case/reports/case_report.html | xargs echo "table rows in the report:"

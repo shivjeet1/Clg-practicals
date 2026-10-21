@@ -1,0 +1,9 @@
+0|artifacts/exp8/case/export/USBDrive    (Volume Label Entry)|3|r/rrwxrwxrwx|0|0|0|1792434600|1792517994|1792517994|1792517994
+0|artifacts/exp8/case/export/case_note.txt (deleted)|5|r/rrwxrwxrwx|0|0|348|1792434600|1792517994|1792517994|1792517994
+0|artifacts/exp8/case/export/evidence_log.txt (deleted)|8|r/rrwxrwxrwx|0|0|14520|1792434600|1792517994|1792517994|1792517994
+0|artifacts/exp8/case/export/usb_readme.txt (deleted)|11|r/rrwxrwxrwx|0|0|149|1792434600|1792517994|1792517994|1792517994
+0|artifacts/exp8/case/export/photo_evidence.jpg (deleted)|14|r/rrwxrwxrwx|0|0|120177|1792434600|1792517994|1792517994|1792517994
+0|artifacts/exp8/case/export/$MBR|8259043|v/v---------|0|0|512|0|0|0|0
+0|artifacts/exp8/case/export/$FAT1|8259044|v/v---------|0|0|2064896|0|0|0|0
+0|artifacts/exp8/case/export/$FAT2|8259045|v/v---------|0|0|2064896|0|0|0|0
+0|artifacts/exp8/case/export/$OrphanFiles|8259046|V/V---------|0|0|0|0|0|0|0

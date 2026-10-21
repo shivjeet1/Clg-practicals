@@ -1,0 +1,19 @@
+# ============================================================
+#  EXPERIMENT 1 : Study of Forensics Tools
+#  Verifying that every forensic tool runs correctly
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+
+echo "----- Sleuth Kit (file system analysis) -----"
+fls -V
+echo "----- TestDisk / PhotoRec (deleted file carving) -----"
+photorec /version
+echo "----- ExifTool (metadata) -----"
+exiftool -ver
+echo "----- mtools (FAT image access) -----"
+mcopy -V
+echo "----- dcfldd (hashing while imaging) -----"
+dcfldd --help 2>&1 | head -2
+echo "----- SQLite / DB Browser for SQLite (browser artefacts) -----"
+sqlite3 --version
+sqlitebrowser --help 2>&1 | head -3

@@ -1,0 +1,28 @@
+# ============================================================
+#  EXPERIMENT 2 : Recovery of Deleted Files
+#  Simulated removable media: a 256 MB FAT32 "USB stick" image
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+cd artifacts/exp2
+
+# --- 1. build the removable-media image (stand-in for /dev/sdb1) ---
+dd if=/dev/zero of=usb_drive.img bs=1M count=256 status=none
+mkfs.vfat -F 32 -n USBDrive usb_drive.img
+ls -lh usb_drive.img
+
+# --- 2. write the evidence files onto the stick ---
+mcopy -i usb_drive.img evidence/case_note.txt      ::
+mcopy -i usb_drive.img evidence/evidence_log.txt   ::
+mcopy -i usb_drive.img evidence/usb_readme.txt     ::
+mcopy -i usb_drive.img evidence/photo_evidence.jpg ::
+
+echo "----- directory listing of the stick -----"
+mdir -i usb_drive.img ::
+
+# --- 3. hash the files as they sit on the stick ---
+mkdir -p hashed
+mcopy -i usb_drive.img ::case_note.txt    hashed/
+mcopy -i usb_drive.img ::evidence_log.txt hashed/
+mcopy -i usb_drive.img ::usb_readme.txt   hashed/
+mcopy -i usb_drive.img ::photo_evidence.jpg hashed/
+sha256sum hashed/* | tee hashes_before_deletion.txt

@@ -1,0 +1,21 @@
+# ============================================================
+#  EXPERIMENT 1 : Study of Forensics Tools
+#  Tool acquisition on Arch Linux
+# ============================================================
+export PATH="$PWD/tools/bin:$PATH"
+
+# --- Official installation command from the lab manual (requires root) ---
+#   sudo pacman -S sleuthkit testdisk perl-image-exiftool sqlitebrowser
+#   yay -S dcfldd            # AUR
+# This VM has no sudo credentials, so the identical packages were fetched
+# with pacman -Sp and unpacked into a local prefix (./tools).
+
+# --- 1. resolve the packages pacman would install ---
+pacman -Sp sleuthkit testdisk perl-image-exiftool sqlitebrowser mtools
+
+# --- 2. dependency closure that is missing from the base system ---
+python3 scripts/pacman_resolve.py sleuthkit testdisk perl-image-exiftool sqlitebrowser mtools
+
+# --- 3. dcfldd is AUR-only: built from source with autotools ---
+echo "dcfldd (AUR) -> built from https://github.com/resurrecting-open-source-projects/dcfldd"
+dcfldd --help 2>&1 | head -2

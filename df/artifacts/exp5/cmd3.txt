@@ -1,0 +1,22 @@
+# ============================================================
+#  EXPERIMENT 5 : Volatile Memory (RAM) Capture
+#  Volatility 3 - memory analysis framework
+# ============================================================
+cd artifacts/exp5
+
+# --- 1. the analysis framework used for the dump ---
+../../tools/vol3/bin/vol --version
+
+# --- 2. Volatility 3 refuses a partial image: it needs the *whole* system
+#        memory, which on a real case is exactly what LiME produces ---
+../../tools/vol3/bin/vol -f ram_dump.raw windows.info 2>&1 | tail -12
+
+# --- 3. the commands that are executed on a real LiME capture ---
+echo "on a full LiME image (ram_dump.lime) the same framework answers:"
+echo "   vol -f ram_dump.lime windows.info"
+echo "   vol -f ram_dump.lime windows.cmdline"
+echo "   vol -f ram_dump.lime windows.pstree"
+echo "   vol -f ram_dump.lime linux.pslist"
+echo "   vol -f ram_dump.lime linux.bash"
+echo "and bulk_extractor scans the raw image for the artefacts:"
+echo "   bulk_extractor -o output_dir ram_dump.raw"
