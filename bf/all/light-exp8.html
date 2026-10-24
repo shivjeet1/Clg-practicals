@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blockchain & Merkle Tree Lab</title>
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f131a'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' rx='2' fill='none' stroke='%234d9bff' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1' fill='%234d9bff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ==================================================================
+   LAB DESIGN SYSTEM · v2 — "Instrument"
+   Shared tokens + components. This block is byte-identical in every
+   lab page, so a tweak here propagates across the whole suite.
+   Theme: dark console by default, light one click away (persisted).
+   ================================================================== */
+:root{
+  color-scheme:dark;
+  --gut:24px;
+  --shell:1360px;
+
+  /* neutrals — graphite */
+  --bg:light-dark(#eef1f6,#090b0f);
+  --surface:light-dark(#ffffff,#101319);
+  --surface-2:light-dark(#f3f5f9,#171b22);
+  --surface-3:light-dark(#e7ebf1,#1f242e);
+  --line:light-dark(#dfe4ec,#232833);
+  --line-2:light-dark(#c3cbd8,#333b48);
+
+  /* ink */
+  --ink:light-dark(#0d1117,#e7eaf0);
+  --ink-2:light-dark(#47515f,#a5aebd);
+  --ink-3:light-dark(#6b7686,#7e8898);
+
+  /* accent — cobalt */
+  --accent:light-dark(#1668d6,#4d9bff);
+  --accent-hi:light-dark(#1257b8,#7ab3ff);
+  --accent-soft:light-dark(#e9f1fd,#13233c);
+  --accent-line:light-dark(#c2d9f8,#27436e);
+  --on-accent:light-dark(#ffffff,#06121f);
+
+  /* status */
+  --ok:light-dark(#0b7a52,#3ecf8e);
+  --ok-soft:light-dark(#e4f5ec,#0e2a1d);
+  --ok-line:light-dark(#a9dcc3,#1d5137);
+  --warn:light-dark(#8a5a09,#e8b339);
+  --warn-soft:light-dark(#fbf2df,#2a2110);
+  --warn-line:light-dark(#ecd4a3,#574320);
+  --err:light-dark(#b23a31,#ff7268);
+  --err-soft:light-dark(#fceceb,#2d1614);
+  --err-line:light-dark(#efc3be,#5e2b26);
+
+  /* shape — panels 12 · controls 8 · data atoms 4 · status pills full */
+  --r-surface:12px; --r-control:8px; --r-atom:4px; --r-pill:999px;
+
+  /* elevation */
+  --sh-1:light-dark(0 1px 2px rgba(13,17,23,.07),0 1px 2px rgba(0,0,0,.5));
+  --sh-2:light-dark(0 1px 2px rgba(13,17,23,.05) 0 12px 28px -18px rgba(13,17,23,.25),0 1px 2px rgba(0,0,0,.45) 0 12px 28px -18px rgba(0,0,0,.7));
+  --sh-3:light-dark(0 2px 6px rgba(13,17,23,.08) 0 24px 48px -24px rgba(13,17,23,.32),0 2px 6px rgba(0,0,0,.55) 0 24px 48px -24px rgba(0,0,0,.8));
+
+  /* type */
+  --font:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+
+  /* motion */
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+:root[data-theme="light"]{color-scheme:light}
+
+/* ---------- reset / base ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:var(--line-2) var(--bg);-webkit-text-size-adjust:100%}
+body{
+  background-color:var(--bg);
+  background-image:radial-gradient(ellipse 90% 420px at 50% -80px,
+    light-dark(rgba(22,104,214,.10),rgba(77,155,255,.13)),transparent 70%);
+  background-repeat:no-repeat;background-attachment:fixed;
+  color:var(--ink);font:15px/1.6 var(--font);-webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+::selection{background:light-dark(rgba(22,104,214,.16),rgba(77,155,255,.28));color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+b{font-weight:600}
+code{font-family:var(--mono)}
+sup{font-size:.72em;line-height:0}
+.mono{font-family:var(--mono)}
+.dim{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
+.hidden{display:none!important}
+
+/* ---------- app shell / top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:light-dark(rgba(255,255,255,.80),rgba(9,11,15,.78));
+  backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:var(--shell);margin:0 auto;padding:9px var(--gut);
+  display:flex;align-items:center;gap:14px;
+}
+.lbrand{
+  display:inline-flex;align-items:center;gap:9px;flex:none;text-decoration:none;color:var(--ink);
+  font:700 11.5px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;
+}
+.lbrand .lmark{
+  width:25px;height:25px;flex:none;display:grid;place-items:center;
+  border-radius:7px;background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent);
+}
+.lbrand .lmark svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.labnav{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-left:auto}
+.labnav a{
+  text-decoration:none;color:var(--ink-2);padding:6px 11px;border-radius:var(--r-pill);
+  font:500 12px/1 var(--mono);letter-spacing:.03em;white-space:nowrap;
+  transition:background .16s var(--ease),color .16s var(--ease),box-shadow .16s var(--ease);
+}
+.labnav a:hover{background:var(--surface-2);color:var(--ink)}
+.labnav a.on{background:var(--accent-soft);color:var(--accent);font-weight:700;box-shadow:inset 0 0 0 1px var(--accent-line)}
+.themebtn{
+  flex:none;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;
+  border-radius:var(--r-control);border:1px solid var(--line-2);
+  background:var(--surface-2);color:var(--ink-2);
+  transition:background .16s var(--ease),color .16s var(--ease),border-color .16s var(--ease);
+}
+.themebtn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.themebtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.themebtn .ico-sun{display:block}
+.themebtn .ico-moon{display:none}
+:root[data-theme="light"] .themebtn .ico-sun{display:none}
+:root[data-theme="light"] .themebtn .ico-moon{display:block}
+
+/* ---------- page frame ---------- */
+.wrap{width:100%;max-width:var(--shell);margin:0 auto;padding:var(--gut) var(--gut) 40px}
+.pagehead{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;
+  margin:0 0 26px;padding-bottom:22px;border-bottom:1px solid var(--line);
+}
+.ph-main{min-width:0;flex:1 1 320px}
+.eyebrow{
+  margin:0 0 10px;color:var(--accent);
+  font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+}
+h1{margin:0;font:700 clamp(28px,3.4vw,40px)/1.08 var(--font);letter-spacing:-.032em}
+h1 em{font-style:normal;color:var(--accent)}
+.subtitle{max-width:64ch;margin:14px 0 0;color:var(--ink-2);font:16px/1.62 var(--font)}
+
+/* ---------- panels ---------- */
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);
+  box-shadow:var(--sh-2);overflow:hidden;
+}
+.phead{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:13px 20px;border-bottom:1px solid var(--line);background:var(--surface-2);
+}
+.plabel{font:600 10.5px/1.45 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}
+.plabel i,.pn,h2 i{font-style:normal;color:var(--accent);font-weight:700}
+.pbody{padding:20px}
+.badge{
+  font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+  padding:6px 11px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:var(--surface-3);color:var(--ink-2);
+}
+.badge.ok{color:var(--ok);background:var(--ok-soft);border-color:var(--ok-line)}
+.badge.bad{color:var(--err);background:var(--err-soft);border-color:var(--err-line)}
+.pill{
+  display:inline-block;padding:6px 12px;border-radius:var(--r-pill);
+  background:var(--ok-soft);border:1px solid var(--ok-line);color:var(--ok);
+  font:600 11px/1 var(--mono);letter-spacing:.06em;white-space:nowrap;
+}
+.pill.bad{background:var(--err-soft);border-color:var(--err-line);color:var(--err)}
+
+/* ---------- controls ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font:600 12.5px/1 var(--font);padding:9px 15px;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink);
+  border-radius:var(--r-control);
+  transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .1s var(--ease);
+}
+.btn svg{width:11px;height:11px;fill:currentColor;flex:none}
+.btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{background:var(--accent-hi);border-color:var(--accent-hi);color:var(--on-accent)}
+.btn.green{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.btn.green:hover{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.btn.danger{background:var(--surface-2);border-color:var(--err-line);color:var(--err)}
+.btn.danger:hover{background:var(--err-soft);border-color:var(--err);color:var(--err)}
+.btn.small{padding:6px 11px;font-size:11.5px}
+
+button.action,button.secondary,button.danger,button{
+  cursor:pointer;font:600 13.5px/1 var(--font);
+}
+input,select,textarea{
+  font:14px/1.5 var(--font);color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:var(--r-control);
+  padding:10px 12px;min-width:0;max-width:100%;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease),background .15s var(--ease);
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--accent);background:var(--surface);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:.85}
+
+/* ---------- footer ---------- */
+.foot{
+  max-width:var(--shell);margin:0 auto;padding:18px var(--gut) 34px;
+  border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font:12px/1.7 var(--font);color:var(--ink-3);
+}
+.foot b{color:var(--ink-2);font-weight:600}
+
+/* ---------- toasts ---------- */
+#toasts{
+  position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:60;
+  max-width:min(360px,calc(100vw - 32px));
+}
+.toast{
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+  padding:12px 16px;font:12.5px/1.5 var(--font);color:var(--ink);
+  border-radius:var(--r-control);box-shadow:var(--sh-3);animation:tin .25s var(--ease);
+}
+.toast.good{border-left-color:var(--ok)}
+.toast.bad{border-left-color:var(--err)}
+.toast.warn{border-left-color:var(--warn)}
+.toast.out{opacity:0;transform:translateX(12px);transition:.3s}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important; scroll-behavior:auto !important; }
+}
+
+/* ---------- exp8 · blockchain & merkle lab ---------- */
+:root{--shell:1560px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.panel{min-width:0}
+.phead h2{margin:0;font:600 19px/1.25 var(--font);letter-spacing:-.02em}
+.phead .description{margin:6px 0 0;color:var(--ink-2);font:13.5px/1.6 var(--font);max-width:56ch}
+label{display:block;margin:14px 0 7px;font:600 12.5px/1.4 var(--font);color:var(--ink-2)}
+label:first-child{margin-top:0}
+textarea,input,select{
+  display:block;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--line-2);
+  border-radius:var(--r-control);color:var(--ink);background:var(--surface-2);font:14px/1.5 var(--font);
+}
+textarea{resize:vertical;font:13px/1.6 var(--mono)}
+.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.buttons button{
+  border:1px solid var(--accent);border-radius:var(--r-control);padding:9px 15px;background:var(--accent);
+  color:var(--on-accent);font:600 14px/1 var(--font);cursor:pointer;
+  transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .1s var(--ease);
+}
+.buttons button:hover{background:var(--accent-hi);border-color:var(--accent-hi)}
+.buttons button:active{transform:translateY(1px)}
+.buttons button.secondary{background:var(--surface-2);color:var(--ink);border-color:var(--line-2)}
+.buttons button.secondary:hover{background:var(--surface-3);border-color:var(--ink-3);color:var(--ink)}
+.buttons button.danger{background:var(--surface-2);color:var(--err);border-color:var(--err-line)}
+.buttons button.danger:hover{background:var(--err-soft);border-color:var(--err);color:var(--err)}
+.status{
+  margin-top:14px;padding:11px 14px;border-radius:var(--r-control);background:var(--surface-2);
+  border:1px solid var(--line);color:var(--ink-2);font:13px/1.6 var(--font);overflow-wrap:anywhere;
+}
+.status.good{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.status.bad{background:var(--err-soft);border-color:var(--err-line);color:var(--err)}
+.status.warn{background:var(--warn-soft);border-color:var(--warn-line);color:var(--warn)}
+
+/* ledger */
+.ledger-panel{margin-bottom:20px}
+.block-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.block-list{
+  display:flex;flex-flow:row nowrap;align-items:stretch;gap:14px;width:100%;
+  overflow-x:auto;padding:4px 2px 12px;
+}
+.block-list > .block-card{flex:0 0 300px;width:300px}
+.block-list > .empty{flex:1 1 100%}
+.block-card{
+  border:1px solid var(--line);border-radius:var(--r-control);padding:14px;min-width:0;
+  background:var(--surface-2);
+}
+.block-card.invalid{border-color:var(--err-line);background:var(--err-soft)}
+.block-title{font:700 14px/1.3 var(--font)}
+.field-label{
+  color:var(--ink-3);font:600 9.5px/1.5 var(--mono);text-transform:uppercase;
+  letter-spacing:.1em;margin-top:10px;
+}
+.hash{margin-top:3px;overflow-wrap:anywhere;font:10.5px/1.55 var(--mono);color:var(--ink-2)}
+.merkle-box{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.tree{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tree-level{display:flex;justify-content:center;gap:4px;width:100%}
+.tree-node{
+  max-width:49%;min-width:0;padding:4px;border:1px solid var(--line-2);border-radius:var(--r-atom);
+  background:var(--surface);color:var(--ink-2);text-align:center;font:9.5px/1.35 var(--mono);
+  overflow-wrap:anywhere;
+}
+.tree-node.root{max-width:100%;border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tree-arrow{color:var(--ink-3);font:9.5px/1 var(--mono)}
+.empty{
+  padding:34px 20px;border:1px dashed var(--line-2);border-radius:var(--r-control);
+  color:var(--ink-3);text-align:center;font:14px/1.6 var(--font);background:var(--surface-2);
+}
+.info{
+  margin-top:22px;padding:15px 17px;border:1px solid var(--line);border-radius:var(--r-control);
+  background:var(--surface-2);color:var(--ink-2);font:13.5px/1.75 var(--font);
+}
+.info strong{color:var(--ink);font-weight:600}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .topbar-in{gap:8px;padding:8px var(--gut)}
+  .lbrand .ltext{display:none}
+  .labnav a{padding:6px 9px;font-size:11.5px}
+  .wrap{padding:var(--gut) 14px 30px}
+  .pbody{padding:16px}
+  .ledger-panel{padding:14px}
+  .block-list > .block-card{flex:0 0 264px;width:264px}
+}
+
+</style>
+<script>
+/* restore the saved theme before first paint */
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="lbrand" href="exp2.html" aria-label="Blockchain Labs — home">
+      <span class="lmark" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="1.7" y="1.7" width="12.6" height="12.6" rx="2"/><rect x="5.7" y="5.7" width="4.6" height="4.6" rx="1" fill="currentColor" stroke="none"/></svg></span>
+      <span class="ltext">Blockchain Labs</span>
+    </a>
+    <nav class="labnav" aria-label="Labs">
+      <a href="exp2.html">Mining</a>
+      <a href="exp3.html">RSA</a>
+      <a href="exp4.html">Consensus</a>
+      <a href="exp6.html">RLP</a>
+      <a href="exp8.html" class="on" aria-current="page">Merkle</a>
+    </nav>
+    <button class="themebtn" id="themeBtn" type="button" aria-label="Switch to light theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.8A8.8 8.8 0 0 1 9.2 3.5a8.8 8.8 0 1 0 11.3 11.3z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <header class="pagehead">
+    <div class="ph-main">
+      <p class="eyebrow">Interactive Blockchain Lab</p>
+      <h1>Blockchain &amp; Merkle Tree Simulator</h1>
+      <p class="subtitle">Add transactions, mine blocks, inspect each block’s Merkle tree, and tamper with a transaction to see the integrity checks fail.</p>
+    </div>
+  </header>
+
+  <section class="panel ledger-panel">
+    <div class="phead">
+      <div>
+        <h2><i>01</i> Blockchain ledger</h2>
+        <p class="description">Blocks run left to right in chain order. Scroll sideways to see additional blocks.</p>
+      </div>
+      <span class="pill" id="blockCount">0 blocks</span>
+    </div>
+    <div class="pbody">
+      <div id="chain" class="block-list">
+        <div class="empty">Your blockchain will appear here after mining a block.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="phead">
+        <div>
+          <h2><i>02</i> Build the blockchain</h2>
+          <p class="description">Enter transactions one per line. Mine a new block to add them to the chain.</p>
+        </div>
+      </div>
+      <div class="pbody">
+        <label for="transactions">Transactions</label>
+        <textarea id="transactions" rows="5">Alice pays Bob 5 coins
+Bob pays Charlie 2 coins
+Charlie pays Dana 1 coin</textarea>
+        <div class="buttons">
+          <button type="button" id="mineBtn">Mine block</button>
+          <button type="button" class="secondary" id="addSampleBtn">Load sample</button>
+          <button type="button" class="secondary" id="resetBtn">Reset chain</button>
+        </div>
+        <div class="status" id="chainStatus" aria-live="polite">Ready. Mine the first block to begin.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="phead">
+        <div>
+          <h2><i>03</i> Integrity &amp; tampering</h2>
+          <p class="description">Select a block and transaction to edit. Then verify the chain to see which hashes no longer match.</p>
+        </div>
+      </div>
+      <div class="pbody">
+        <label for="blockSelect">Block to tamper with</label>
+        <select id="blockSelect"><option value="">Mine a block first</option></select>
+        <label for="txSelect">Transaction</label>
+        <select id="txSelect"><option value="">No transactions available</option></select>
+        <label for="tamperedText">Modified transaction text</label>
+        <input id="tamperedText" value="Alice pays Bob 500 coins">
+        <div class="buttons">
+          <button type="button" class="danger" id="tamperBtn">Tamper transaction</button>
+          <button type="button" class="secondary" id="verifyBtn">Verify blockchain</button>
+          <button type="button" class="secondary" id="repairBtn">Recalculate hashes</button>
+        </div>
+        <div class="status" id="verifyStatus" aria-live="polite">The integrity report will appear here.</div>
+        <div class="info">
+          <strong>How to read the result:</strong> a transaction change modifies its leaf hash and Merkle root. The block hash then changes, so the next block’s stored previous hash no longer matches. “Recalculate hashes” demonstrates why changing one block requires rebuilding later links; real networks rely on consensus, not just local recalculation.
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <span><b>Local compute.</b> SHA-256 runs in your browser — your chain never leaves this page.</span>
+  <span><b>Model.</b> Hashing and Merkle roots are real; consensus and finality are not simulated.</span>
+</footer>
+
+<script>
+  const chain = [];
+  let verification = [];
+
+  async function sha256(text) {
+    const data = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function hashPair(left, right) {
+    return sha256(left + right);
+  }
+
+  async function buildMerkleTree(transactions) {
+    if (transactions.length === 0) {
+      const emptyRoot = await sha256("");
+      return { root: emptyRoot, levels: [[emptyRoot]], leaves: [] };
+    }
+    const leaves = [];
+    for (const tx of transactions) leaves.push(await sha256(tx));
+    const levels = [leaves];
+    let current = leaves;
+    while (current.length > 1) {
+      const next = [];
+      for (let i = 0; i < current.length; i += 2) {
+        const left = current[i];
+        const right = current[i + 1] || current[i];
+        next.push(await hashPair(left, right));
+      }
+      levels.push(next);
+      current = next;
+    }
+    return { root: current[0], levels, leaves };
+  }
+
+  async function calculateBlockHash(block) {
+    return sha256([
+      block.index,
+      block.timestamp,
+      block.previousHash,
+      block.merkleRoot,
+      block.nonce
+    ].join("|"));
+  }
+
+  async function mineBlock() {
+    const transactions = document.getElementById("transactions").value
+      .split("\n").map(tx => tx.trim()).filter(Boolean);
+    const status = document.getElementById("chainStatus");
+    if (!transactions.length) {
+      setStatus(status, "Enter at least one transaction before mining.", "bad");
+      return;
+    }
+
+    const button = document.getElementById("mineBtn");
+    button.disabled = true;
+    button.textContent = "Mining…";
+    try {
+      const index = chain.length;
+      const previousHash = index === 0 ? "0".repeat(64) : chain[index - 1].hash;
+      const merkle = await buildMerkleTree(transactions);
+      const block = {
+        index,
+        timestamp: new Date().toISOString(),
+        transactions,
+        previousHash,
+        merkleRoot: merkle.root,
+        nonce: 0,
+        hash: ""
+      };
+      block.hash = await calculateBlockHash(block);
+      chain.push(block);
+      verification = [];
+      setStatus(status, "Block #" + index + " added with " + transactions.length + " transaction(s).", "good");
+      await render();
+    } catch (error) {
+      setStatus(status, "Could not create block: " + error.message, "bad");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Mine block";
+    }
+  }
+
+  function setStatus(element, message, type) {
+    element.textContent = message;
+    element.className = "status" + (type ? " " + type : "");
+  }
+
+  async function verifyChain() {
+    const report = [];
+    for (let i = 0; i < chain.length; i++) {
+      const block = chain[i];
+      const merkle = await buildMerkleTree(block.transactions);
+      const recalculatedHash = await calculateBlockHash({ ...block, merkleRoot: merkle.root });
+      const expectedPrevious = i === 0 ? "0".repeat(64) : chain[i - 1].hash;
+      const txOk = merkle.root === block.merkleRoot;
+      const hashOk = recalculatedHash === block.hash;
+      const linkOk = block.previousHash === expectedPrevious;
+      report.push({
+        index: i,
+        txOk,
+        hashOk,
+        linkOk,
+        ok: txOk && hashOk && linkOk,
+        recalculatedRoot: merkle.root,
+        recalculatedHash
+      });
+    }
+    verification = report;
+    const invalid = report.filter(item => !item.ok);
+    const status = document.getElementById("verifyStatus");
+    if (invalid.length === 0) {
+      setStatus(status, "Blockchain valid. All transaction Merkle roots, block hashes, and previous-hash links match.", "good");
+    } else {
+      setStatus(status, "Integrity check failed. Invalid block(s): " + invalid.map(item => "#" + item.index).join(", ") +
+        ". A transaction, Merkle root, block hash, or previous-hash link does not match.", "bad");
+    }
+    await render();
+  }
+
+  async function render() {
+    const chainBox = document.getElementById("chain");
+    document.getElementById("blockCount").textContent = chain.length + (chain.length === 1 ? " block" : " blocks");
+    if (!chain.length) {
+      chainBox.innerHTML = '<div class="empty">Your blockchain will appear here after mining a block.</div>';
+    } else {
+      let markup = "";
+      for (const block of chain) {
+        const report = verification.find(item => item.index === block.index);
+        const invalid = report && !report.ok;
+        const merkle = await buildMerkleTree(block.transactions);
+        markup += '<article class="block-card' + (invalid ? ' invalid' : '') + '">';
+        markup += '<div class="block-top"><div class="block-title">Block #' + block.index + '</div>';
+        markup += '<span class="pill' + (invalid ? ' bad' : '') + '">' + (report ? (invalid ? 'Integrity failed' : 'Verified') : 'Not checked') + '</span></div>';
+        markup += '<div class="field-label">Previous hash</div><div class="hash">' + block.previousHash + '</div>';
+        markup += '<div class="field-label" style="margin-top:8px">Block hash (stored)</div><div class="hash">' + block.hash + '</div>';
+        markup += '<div class="merkle-box"><div class="field-label">Merkle root (stored)</div><div class="hash">' + block.merkleRoot + '</div>';
+        markup += '<div class="field-label" style="margin-top:8px">Merkle tree (leaf hashes → root)</div>';
+        markup += renderTree(merkle.levels, block.merkleRoot);
+        if (report) {
+          markup += '<div class="status ' + (report.txOk ? 'good' : 'bad') + '">Merkle root: ' + (report.txOk ? 'matches' : 'does not match') + '</div>';
+          markup += '<div class="status ' + (report.hashOk ? 'good' : 'bad') + '">Block hash: ' + (report.hashOk ? 'matches' : 'does not match') + '</div>';
+          markup += '<div class="status ' + (report.linkOk ? 'good' : 'bad') + '">Previous-hash link: ' + (report.linkOk ? 'matches' : 'does not match') + '</div>';
+        }
+        markup += '</div></article>';
+      }
+      chainBox.innerHTML = markup;
+    }
+    updateSelectors();
+  }
+
+  function renderTree(levels, storedRoot) {
+    let markup = '<div class="tree">';
+    for (let levelIndex = levels.length - 1; levelIndex >= 0; levelIndex--) {
+      const level = levels[levelIndex];
+      markup += '<div class="tree-level">';
+      level.forEach((hash, index) => {
+        const isRoot = levelIndex === levels.length - 1;
+        const shownHash = hash.slice(0, 12) + "…" + hash.slice(-8);
+        markup += '<div class="tree-node' + (isRoot ? ' root' : '') + '" title="' + hash + '">' +
+          (isRoot ? 'ROOT<br>' : 'L' + levelIndex + ' · ') + shownHash + '</div>';
+      });
+      markup += '</div>';
+      if (levelIndex > 0) markup += '<div class="tree-arrow">↑ combined child hashes</div>';
+    }
+    markup += '</div>';
+    if (levels[levels.length - 1][0] !== storedRoot) {
+      markup += '<div class="status bad">Displayed tree root differs from stored root.</div>';
+    }
+    return markup;
+  }
+
+  function updateSelectors() {
+    const blockSelect = document.getElementById("blockSelect");
+    const txSelect = document.getElementById("txSelect");
+    const previousBlock = blockSelect.value;
+    if (!chain.length) {
+      blockSelect.innerHTML = '<option value="">Mine a block first</option>';
+      txSelect.innerHTML = '<option value="">No transactions available</option>';
+      return;
+    }
+    blockSelect.innerHTML = chain.map(block =>
+      '<option value="' + block.index + '">Block #' + block.index + '</option>'
+    ).join("");
+    if (chain.some(block => String(block.index) === previousBlock)) blockSelect.value = previousBlock;
+    updateTransactionOptions();
+  }
+
+  function updateTransactionOptions() {
+    const blockIndex = Number(document.getElementById("blockSelect").value);
+    const block = chain.find(item => item.index === blockIndex);
+    const txSelect = document.getElementById("txSelect");
+    if (!block) {
+      txSelect.innerHTML = '<option value="">No transactions available</option>';
+      return;
+    }
+    txSelect.innerHTML = block.transactions.map((tx, index) =>
+      '<option value="' + index + '">Transaction ' + (index + 1) + ': ' + escapeHtml(tx.slice(0, 38)) + '</option>'
+    ).join("");
+  }
+
+  async function tamperTransaction() {
+    const blockIndex = Number(document.getElementById("blockSelect").value);
+    const txIndex = Number(document.getElementById("txSelect").value);
+    const block = chain.find(item => item.index === blockIndex);
+    if (!block || !Number.isInteger(txIndex) || !block.transactions[txIndex]) {
+      setStatus(document.getElementById("verifyStatus"), "Select a block and transaction first.", "bad");
+      return;
+    }
+    const modified = document.getElementById("tamperedText").value.trim();
+    if (!modified) {
+      setStatus(document.getElementById("verifyStatus"), "Enter the modified transaction text.", "bad");
+      return;
+    }
+    block.transactions[txIndex] = modified;
+    verification = [];
+    setStatus(document.getElementById("verifyStatus"), "Transaction changed. Run “Verify blockchain” to inspect the broken integrity checks.", "warn");
+    await render();
+    document.getElementById("blockSelect").value = String(blockIndex);
+    updateTransactionOptions();
+    document.getElementById("txSelect").value = String(txIndex);
+  }
+
+  async function recalculateHashes() {
+    if (!chain.length) {
+      setStatus(document.getElementById("verifyStatus"), "Mine a block before recalculating hashes.", "bad");
+      return;
+    }
+    for (let i = 0; i < chain.length; i++) {
+      const block = chain[i];
+      block.previousHash = i === 0 ? "0".repeat(64) : chain[i - 1].hash;
+      const merkle = await buildMerkleTree(block.transactions);
+      block.merkleRoot = merkle.root;
+      block.hash = await calculateBlockHash(block);
+    }
+    verification = [];
+    setStatus(document.getElementById("verifyStatus"), "Hashes recalculated from the edited data. Run verification again. This local repair is not proof that the network would accept the altered chain.", "warn");
+    await render();
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, character => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[character]);
+  }
+
+  document.getElementById("blockSelect").addEventListener("change", updateTransactionOptions);
+  document.getElementById("mineBtn").addEventListener("click", mineBlock);
+  document.getElementById("verifyBtn").addEventListener("click", verifyChain);
+  document.getElementById("tamperBtn").addEventListener("click", tamperTransaction);
+  document.getElementById("repairBtn").addEventListener("click", recalculateHashes);
+  document.getElementById("addSampleBtn").addEventListener("click", () => {
+    document.getElementById("transactions").value = "Alice pays Bob 5 coins\nBob pays Charlie 2 coins\nCharlie pays Dana 1 coin";
+    setStatus(document.getElementById("chainStatus"), "Sample transactions loaded. Mine a block to add them.", "");
+  });
+  document.getElementById("resetBtn").addEventListener("click", async () => {
+    chain.length = 0;
+    verification = [];
+    document.getElementById("transactions").value = "Alice pays Bob 5 coins\nBob pays Charlie 2 coins\nCharlie pays Dana 1 coin";
+    setStatus(document.getElementById("chainStatus"), "Chain reset. Mine a new block to begin.", "");
+    setStatus(document.getElementById("verifyStatus"), "The integrity report will appear here.", "");
+    await render();
+  });
+
+  render();
+</script>
+
+<script>
+/* theme switch — persists across the lab pages */
+(function(){
+  var btn=document.getElementById('themeBtn');if(!btn)return;
+  var root=document.documentElement;
+  function label(){btn.setAttribute('aria-label',root.getAttribute('data-theme')==='light'?'Switch to dark theme':'Switch to light theme');}
+  label();
+  btn.addEventListener('click',function(){
+    var next=(root.getAttribute('data-theme')==='light')?'dark':'light';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('lab-theme',next);}catch(e){}
+    label();
+    window.dispatchEvent(new CustomEvent('lab:theme',{detail:next}));
+  });
+})();
+</script>
+</body>
+</html>

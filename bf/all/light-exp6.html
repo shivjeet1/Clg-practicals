@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ethereum RLP Encoder / Decoder</title>
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f131a'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' rx='2' fill='none' stroke='%234d9bff' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1' fill='%234d9bff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ==================================================================
+   LAB DESIGN SYSTEM · v2 — "Instrument"
+   Shared tokens + components. This block is byte-identical in every
+   lab page, so a tweak here propagates across the whole suite.
+   Theme: dark console by default, light one click away (persisted).
+   ================================================================== */
+:root{
+  color-scheme:dark;
+  --gut:24px;
+  --shell:1360px;
+
+  /* neutrals — graphite */
+  --bg:light-dark(#eef1f6,#090b0f);
+  --surface:light-dark(#ffffff,#101319);
+  --surface-2:light-dark(#f3f5f9,#171b22);
+  --surface-3:light-dark(#e7ebf1,#1f242e);
+  --line:light-dark(#dfe4ec,#232833);
+  --line-2:light-dark(#c3cbd8,#333b48);
+
+  /* ink */
+  --ink:light-dark(#0d1117,#e7eaf0);
+  --ink-2:light-dark(#47515f,#a5aebd);
+  --ink-3:light-dark(#6b7686,#7e8898);
+
+  /* accent — cobalt */
+  --accent:light-dark(#1668d6,#4d9bff);
+  --accent-hi:light-dark(#1257b8,#7ab3ff);
+  --accent-soft:light-dark(#e9f1fd,#13233c);
+  --accent-line:light-dark(#c2d9f8,#27436e);
+  --on-accent:light-dark(#ffffff,#06121f);
+
+  /* status */
+  --ok:light-dark(#0b7a52,#3ecf8e);
+  --ok-soft:light-dark(#e4f5ec,#0e2a1d);
+  --ok-line:light-dark(#a9dcc3,#1d5137);
+  --warn:light-dark(#8a5a09,#e8b339);
+  --warn-soft:light-dark(#fbf2df,#2a2110);
+  --warn-line:light-dark(#ecd4a3,#574320);
+  --err:light-dark(#b23a31,#ff7268);
+  --err-soft:light-dark(#fceceb,#2d1614);
+  --err-line:light-dark(#efc3be,#5e2b26);
+
+  /* shape — panels 12 · controls 8 · data atoms 4 · status pills full */
+  --r-surface:12px; --r-control:8px; --r-atom:4px; --r-pill:999px;
+
+  /* elevation */
+  --sh-1:light-dark(0 1px 2px rgba(13,17,23,.07),0 1px 2px rgba(0,0,0,.5));
+  --sh-2:light-dark(0 1px 2px rgba(13,17,23,.05) 0 12px 28px -18px rgba(13,17,23,.25),0 1px 2px rgba(0,0,0,.45) 0 12px 28px -18px rgba(0,0,0,.7));
+  --sh-3:light-dark(0 2px 6px rgba(13,17,23,.08) 0 24px 48px -24px rgba(13,17,23,.32),0 2px 6px rgba(0,0,0,.55) 0 24px 48px -24px rgba(0,0,0,.8));
+
+  /* type */
+  --font:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+
+  /* motion */
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+:root[data-theme="light"]{color-scheme:light}
+
+/* ---------- reset / base ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:var(--line-2) var(--bg);-webkit-text-size-adjust:100%}
+body{
+  background-color:var(--bg);
+  background-image:radial-gradient(ellipse 90% 420px at 50% -80px,
+    light-dark(rgba(22,104,214,.10),rgba(77,155,255,.13)),transparent 70%);
+  background-repeat:no-repeat;background-attachment:fixed;
+  color:var(--ink);font:15px/1.6 var(--font);-webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+::selection{background:light-dark(rgba(22,104,214,.16),rgba(77,155,255,.28));color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+b{font-weight:600}
+code{font-family:var(--mono)}
+sup{font-size:.72em;line-height:0}
+.mono{font-family:var(--mono)}
+.dim{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
+.hidden{display:none!important}
+
+/* ---------- app shell / top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:light-dark(rgba(255,255,255,.80),rgba(9,11,15,.78));
+  backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:var(--shell);margin:0 auto;padding:9px var(--gut);
+  display:flex;align-items:center;gap:14px;
+}
+.lbrand{
+  display:inline-flex;align-items:center;gap:9px;flex:none;text-decoration:none;color:var(--ink);
+  font:700 11.5px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;
+}
+.lbrand .lmark{
+  width:25px;height:25px;flex:none;display:grid;place-items:center;
+  border-radius:7px;background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent);
+}
+.lbrand .lmark svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.labnav{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-left:auto}
+.labnav a{
+  text-decoration:none;color:var(--ink-2);padding:6px 11px;border-radius:var(--r-pill);
+  font:500 12px/1 var(--mono);letter-spacing:.03em;white-space:nowrap;
+  transition:background .16s var(--ease),color .16s var(--ease),box-shadow .16s var(--ease);
+}
+.labnav a:hover{background:var(--surface-2);color:var(--ink)}
+.labnav a.on{background:var(--accent-soft);color:var(--accent);font-weight:700;box-shadow:inset 0 0 0 1px var(--accent-line)}
+.themebtn{
+  flex:none;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;
+  border-radius:var(--r-control);border:1px solid var(--line-2);
+  background:var(--surface-2);color:var(--ink-2);
+  transition:background .16s var(--ease),color .16s var(--ease),border-color .16s var(--ease);
+}
+.themebtn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.themebtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.themebtn .ico-sun{display:block}
+.themebtn .ico-moon{display:none}
+:root[data-theme="light"] .themebtn .ico-sun{display:none}
+:root[data-theme="light"] .themebtn .ico-moon{display:block}
+
+/* ---------- page frame ---------- */
+.wrap{width:100%;max-width:var(--shell);margin:0 auto;padding:var(--gut) var(--gut) 40px}
+.pagehead{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;
+  margin:0 0 26px;padding-bottom:22px;border-bottom:1px solid var(--line);
+}
+.ph-main{min-width:0;flex:1 1 320px}
+.eyebrow{
+  margin:0 0 10px;color:var(--accent);
+  font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+}
+h1{margin:0;font:700 clamp(28px,3.4vw,40px)/1.08 var(--font);letter-spacing:-.032em}
+h1 em{font-style:normal;color:var(--accent)}
+.subtitle{max-width:64ch;margin:14px 0 0;color:var(--ink-2);font:16px/1.62 var(--font)}
+
+/* ---------- panels ---------- */
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);
+  box-shadow:var(--sh-2);overflow:hidden;
+}
+.phead{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:13px 20px;border-bottom:1px solid var(--line);background:var(--surface-2);
+}
+.plabel{font:600 10.5px/1.45 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}
+.plabel i,.pn,h2 i{font-style:normal;color:var(--accent);font-weight:700}
+.pbody{padding:20px}
+.badge{
+  font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+  padding:6px 11px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:var(--surface-3);color:var(--ink-2);
+}
+.badge.ok{color:var(--ok);background:var(--ok-soft);border-color:var(--ok-line)}
+.badge.bad{color:var(--err);background:var(--err-soft);border-color:var(--err-line)}
+.pill{
+  display:inline-block;padding:6px 12px;border-radius:var(--r-pill);
+  background:var(--ok-soft);border:1px solid var(--ok-line);color:var(--ok);
+  font:600 11px/1 var(--mono);letter-spacing:.06em;white-space:nowrap;
+}
+.pill.bad{background:var(--err-soft);border-color:var(--err-line);color:var(--err)}
+
+/* ---------- controls ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font:600 12.5px/1 var(--font);padding:9px 15px;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink);
+  border-radius:var(--r-control);
+  transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .1s var(--ease);
+}
+.btn svg{width:11px;height:11px;fill:currentColor;flex:none}
+.btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{background:var(--accent-hi);border-color:var(--accent-hi);color:var(--on-accent)}
+.btn.green{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.btn.green:hover{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.btn.danger{background:var(--surface-2);border-color:var(--err-line);color:var(--err)}
+.btn.danger:hover{background:var(--err-soft);border-color:var(--err);color:var(--err)}
+.btn.small{padding:6px 11px;font-size:11.5px}
+
+button.action,button.secondary,button.danger,button{
+  cursor:pointer;font:600 13.5px/1 var(--font);
+}
+input,select,textarea{
+  font:14px/1.5 var(--font);color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:var(--r-control);
+  padding:10px 12px;min-width:0;max-width:100%;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease),background .15s var(--ease);
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--accent);background:var(--surface);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:.85}
+
+/* ---------- footer ---------- */
+.foot{
+  max-width:var(--shell);margin:0 auto;padding:18px var(--gut) 34px;
+  border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font:12px/1.7 var(--font);color:var(--ink-3);
+}
+.foot b{color:var(--ink-2);font-weight:600}
+
+/* ---------- toasts ---------- */
+#toasts{
+  position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:60;
+  max-width:min(360px,calc(100vw - 32px));
+}
+.toast{
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+  padding:12px 16px;font:12.5px/1.5 var(--font);color:var(--ink);
+  border-radius:var(--r-control);box-shadow:var(--sh-3);animation:tin .25s var(--ease);
+}
+.toast.good{border-left-color:var(--ok)}
+.toast.bad{border-left-color:var(--err)}
+.toast.warn{border-left-color:var(--warn)}
+.toast.out{opacity:0;transform:translateX(12px);transition:.3s}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important; scroll-behavior:auto !important; }
+}
+
+/* ---------- exp6 · RLP encoder / decoder ---------- */
+:root{--shell:1140px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.panel{min-width:0}
+.phead h2{margin:0;font:600 19px/1.25 var(--font);letter-spacing:-.02em}
+.phead .description{margin:6px 0 0;color:var(--ink-2);font:13.5px/1.6 var(--font);max-width:56ch}
+label{display:block;margin:14px 0 7px;font:600 12.5px/1.4 var(--font);color:var(--ink-2)}
+label:first-child{margin-top:0}
+textarea,input{
+  display:block;width:100%;min-width:0;padding:11px 13px;border:1px solid var(--line-2);
+  border-radius:var(--r-control);color:var(--ink);background:var(--surface-2);
+  font:13px/1.6 var(--mono);resize:vertical;
+}
+#inputData{min-height:280px}
+#encodedOutput{min-height:132px;color:var(--accent)}
+#decodedOutput{min-height:200px}
+.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.buttons button{
+  border:1px solid var(--accent);border-radius:var(--r-control);padding:10px 16px;
+  background:var(--accent);color:var(--on-accent);
+  transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .1s var(--ease);
+}
+.buttons button:hover{background:var(--accent-hi);border-color:var(--accent-hi)}
+.buttons button:active{transform:translateY(1px)}
+.buttons button.secondary{background:var(--surface-2);color:var(--ink);border-color:var(--line-2)}
+.buttons button.secondary:hover{background:var(--surface-3);border-color:var(--ink-3);color:var(--ink)}
+.status{
+  margin-top:15px;padding:11px 14px;border-radius:var(--r-control);background:var(--surface-2);
+  border:1px solid var(--line);color:var(--ink-2);font:13px/1.6 var(--font);overflow-wrap:anywhere;
+}
+.status.success{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.status.error{background:var(--err-soft);border-color:var(--err-line);color:var(--err)}
+.mini-title{margin:20px 0 8px;font:600 12.5px/1.4 var(--font);color:var(--ink-2)}
+.info{
+  margin-top:22px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--r-control);
+  background:var(--surface-2);color:var(--ink-2);font:13.5px/1.75 var(--font);
+}
+.info strong{color:var(--ink);font-weight:600}
+.note{margin:20px 2px 0;color:var(--ink-3);font:12.5px/1.7 var(--font)}
+.note code{padding:2px 6px;border-radius:var(--r-atom);background:var(--surface-3);font:12.5px/1 var(--mono);color:var(--ink)}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .topbar-in{gap:8px;padding:8px var(--gut)}
+  .lbrand .ltext{display:none}
+  .labnav a{padding:6px 9px;font-size:11.5px}
+  .wrap{padding:var(--gut) 14px 30px}
+  .pbody{padding:16px}
+}
+
+</style>
+<script>
+/* restore the saved theme before first paint */
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="lbrand" href="exp2.html" aria-label="Blockchain Labs — home">
+      <span class="lmark" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="1.7" y="1.7" width="12.6" height="12.6" rx="2"/><rect x="5.7" y="5.7" width="4.6" height="4.6" rx="1" fill="currentColor" stroke="none"/></svg></span>
+      <span class="ltext">Blockchain Labs</span>
+    </a>
+    <nav class="labnav" aria-label="Labs">
+      <a href="exp2.html">Mining</a>
+      <a href="exp3.html">RSA</a>
+      <a href="exp4.html">Consensus</a>
+      <a href="exp6.html" class="on" aria-current="page">RLP</a>
+      <a href="exp8.html">Merkle</a>
+    </nav>
+    <button class="themebtn" id="themeBtn" type="button" aria-label="Switch to light theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.8A8.8 8.8 0 0 1 9.2 3.5a8.8 8.8 0 1 0 11.3 11.3z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <header class="pagehead">
+    <div class="ph-main">
+      <p class="eyebrow">Ethereum · Serialization Lab</p>
+      <h1>RLP Encoder / Decoder</h1>
+      <p class="subtitle">Enter transaction fields as hex strings, encode them with Recursive Length Prefix (RLP), then decode the result to verify the original values.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="phead">
+        <div>
+          <h2><i>01</i> Transaction fields</h2>
+          <p class="description">Use a JSON array of hex strings. Each string represents one byte sequence in the transaction list.</p>
+        </div>
+      </div>
+      <div class="pbody">
+        <label for="inputData">Input JSON</label>
+        <textarea id="inputData" spellcheck="false">[
+  "0x01",
+  "0x09184e72a000",
+  "0x2710",
+  "0x0000000000000000000000000000000000000000",
+  "0x00",
+  "0x",
+  "0x1c",
+  "0x5e1d3a76fbf824220e9e",
+  "0x7e1d3a76fbf824220e9e"
+]</textarea>
+        <div class="buttons">
+          <button type="button" id="encodeBtn">Encode + Decode</button>
+          <button type="button" class="secondary" id="exampleBtn">Load example</button>
+          <button type="button" class="secondary" id="clearBtn">Clear</button>
+        </div>
+        <div class="status" id="status" aria-live="polite">Ready. Select “Encode + Decode” to run the demo.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="phead">
+        <div>
+          <h2><i>02</i> Encoded and decoded output</h2>
+          <p class="description">The encoded result is shown as hex for readability. The decoded values should match the input fields.</p>
+        </div>
+      </div>
+      <div class="pbody">
+        <label for="encodedOutput">RLP-encoded bytes (hex)</label>
+        <textarea id="encodedOutput" spellcheck="false" readonly placeholder="Encoded RLP output appears here…"></textarea>
+        <div class="buttons">
+          <button type="button" class="secondary" id="decodeBtn">Decode encoded output</button>
+          <button type="button" class="secondary" id="copyBtn">Copy encoded hex</button>
+        </div>
+        <label for="decodedOutput">Decoded JSON</label>
+        <textarea id="decodedOutput" spellcheck="false" readonly placeholder="Decoded values appear here…"></textarea>
+      </div>
+    </section>
+  </div>
+
+  <aside class="info">
+    <strong>Note:</strong> This is a demonstration of RLP serialization, not a signed or broadcastable Ethereum transaction. The sample values are illustrative. Ethereum transaction formats differ by transaction type, and numeric fields must be represented as bytes according to the protocol.
+  </aside>
+</main>
+
+<footer class="foot">
+  <span><b>Dependency.</b> Uses the <code>@ethereumjs/rlp</code> library from a CDN — internet access is required to load it.</span>
+  <span><b>Scope.</b> Encoding and decoding run entirely in your browser.</span>
+</footer>
+
+<script type="module">
+  import { encode, decode } from "https://esm.sh/@ethereumjs/rlp@5";
+
+  const input = document.getElementById("inputData");
+  const encodedOutput = document.getElementById("encodedOutput");
+  const decodedOutput = document.getElementById("decodedOutput");
+  const status = document.getElementById("status");
+
+  const example = `[
+  "0x01",
+  "0x09184e72a000",
+  "0x2710",
+  "0x0000000000000000000000000000000000000000",
+  "0x00",
+  "0x",
+  "0x1c",
+  "0x5e1d3a76fbf824220e9e",
+  "0x7e1d3a76fbf824220e9e"
+]`;
+
+  function showStatus(message, type = "") {
+    status.textContent = message;
+    status.className = "status" + (type ? " " + type : "");
+  }
+
+  function hexToBytes(value, index) {
+    if (typeof value !== "string") {
+      throw new Error("Item " + index + " must be a hex string.");
+    }
+    if (!/^0x(?:[0-9a-fA-F]{2})*$/.test(value)) {
+      throw new Error("Item " + index + " must use 0x followed by an even number of hex digits. Use \"0x\" for empty bytes.");
+    }
+    const hex = value.slice(2);
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    }
+    return bytes;
+  }
+
+  function bytesToHex(value) {
+    return "0x" + Array.from(value, byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function decodedToHex(value) {
+    if (Array.isArray(value)) return value.map(decodedToHex);
+    return bytesToHex(value);
+  }
+
+  function parseInput() {
+    let parsed;
+    try {
+      parsed = JSON.parse(input.value);
+    } catch (error) {
+      throw new Error("Invalid JSON: " + error.message);
+    }
+    if (!Array.isArray(parsed)) throw new Error("Input must be a JSON array of hex strings.");
+    return parsed.map((item, index) => hexToBytes(item, index + 1));
+  }
+
+  function encodeAndDecode() {
+    try {
+      const fields = parseInput();
+      const encoded = encode(fields);
+      const encodedHex = bytesToHex(encoded);
+      const decoded = decode(encoded);
+      encodedOutput.value = encodedHex;
+      decodedOutput.value = JSON.stringify(decodedToHex(decoded), null, 2);
+      showStatus("Success. RLP encoding and decoding completed for " + fields.length + " fields.", "success");
+    } catch (error) {
+      showStatus(error.message || String(error), "error");
+    }
+  }
+
+  function decodeEncoded() {
+    try {
+      const value = encodedOutput.value.trim().replace(/^0x/, "");
+      if (!value || !/^(?:[0-9a-fA-F]{2})+$/.test(value)) {
+        throw new Error("Encoded output must be a non-empty, even-length hex string.");
+      }
+      const bytes = hexToBytes("0x" + value, "encoded output");
+      const decoded = decode(bytes);
+      decodedOutput.value = JSON.stringify(decodedToHex(decoded), null, 2);
+      showStatus("Encoded data decoded successfully.", "success");
+    } catch (error) {
+      showStatus(error.message || String(error), "error");
+    }
+  }
+
+  document.getElementById("encodeBtn").addEventListener("click", encodeAndDecode);
+  document.getElementById("decodeBtn").addEventListener("click", decodeEncoded);
+  document.getElementById("exampleBtn").addEventListener("click", () => {
+    input.value = example;
+    showStatus("Example loaded. Select “Encode + Decode” to run it.");
+  });
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    input.value = "";
+    encodedOutput.value = "";
+    decodedOutput.value = "";
+    showStatus("Cleared. Enter a JSON array of hex strings.");
+  });
+  document.getElementById("copyBtn").addEventListener("click", async () => {
+    if (!encodedOutput.value) {
+      showStatus("Encode the input first, then copy the output.", "error");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(encodedOutput.value);
+      showStatus("Encoded hex copied to clipboard.", "success");
+    } catch {
+      encodedOutput.focus();
+      encodedOutput.select();
+      showStatus("Clipboard access was blocked. The encoded hex is selected; copy it manually.");
+    }
+  });
+</script>
+
+<script>
+/* theme switch — persists across the lab pages */
+(function(){
+  var btn=document.getElementById('themeBtn');if(!btn)return;
+  var root=document.documentElement;
+  function label(){btn.setAttribute('aria-label',root.getAttribute('data-theme')==='light'?'Switch to dark theme':'Switch to light theme');}
+  label();
+  btn.addEventListener('click',function(){
+    var next=(root.getAttribute('data-theme')==='light')?'dark':'light';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('lab-theme',next);}catch(e){}
+    label();
+    window.dispatchEvent(new CustomEvent('lab:theme',{detail:next}));
+  });
+})();
+</script>
+</body>
+</html>

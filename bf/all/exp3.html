@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSA Lab — Web Crypto API + Visualizations</title>
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f131a'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' rx='2' fill='none' stroke='%234d9bff' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1' fill='%234d9bff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==================================================================
+   LAB DESIGN SYSTEM · v2 — "Instrument"
+   Shared tokens + components. This block is byte-identical in every
+   lab page, so a tweak here propagates across the whole suite.
+   Theme: dark console by default, light one click away (persisted).
+   ================================================================== */
+:root{
+  color-scheme:dark;
+  --gut:24px;
+  --shell:1360px;
+
+  /* neutrals — graphite */
+  --bg:light-dark(#eef1f6,#090b0f);
+  --surface:light-dark(#ffffff,#101319);
+  --surface-2:light-dark(#f3f5f9,#171b22);
+  --surface-3:light-dark(#e7ebf1,#1f242e);
+  --line:light-dark(#dfe4ec,#232833);
+  --line-2:light-dark(#c3cbd8,#333b48);
+
+  /* ink */
+  --ink:light-dark(#0d1117,#e7eaf0);
+  --ink-2:light-dark(#47515f,#a5aebd);
+  --ink-3:light-dark(#6b7686,#7e8898);
+
+  /* accent — cobalt */
+  --accent:light-dark(#1668d6,#4d9bff);
+  --accent-hi:light-dark(#1257b8,#7ab3ff);
+  --accent-soft:light-dark(#e9f1fd,#13233c);
+  --accent-line:light-dark(#c2d9f8,#27436e);
+  --on-accent:light-dark(#ffffff,#06121f);
+
+  /* status */
+  --ok:light-dark(#0b7a52,#3ecf8e);
+  --ok-soft:light-dark(#e4f5ec,#0e2a1d);
+  --ok-line:light-dark(#a9dcc3,#1d5137);
+  --warn:light-dark(#8a5a09,#e8b339);
+  --warn-soft:light-dark(#fbf2df,#2a2110);
+  --warn-line:light-dark(#ecd4a3,#574320);
+  --err:light-dark(#b23a31,#ff7268);
+  --err-soft:light-dark(#fceceb,#2d1614);
+  --err-line:light-dark(#efc3be,#5e2b26);
+
+  /* shape — panels 12 · controls 8 · data atoms 4 · status pills full */
+  --r-surface:12px; --r-control:8px; --r-atom:4px; --r-pill:999px;
+
+  /* elevation */
+  --sh-1:light-dark(0 1px 2px rgba(13,17,23,.07),0 1px 2px rgba(0,0,0,.5));
+  --sh-2:light-dark(0 1px 2px rgba(13,17,23,.05) 0 12px 28px -18px rgba(13,17,23,.25),0 1px 2px rgba(0,0,0,.45) 0 12px 28px -18px rgba(0,0,0,.7));
+  --sh-3:light-dark(0 2px 6px rgba(13,17,23,.08) 0 24px 48px -24px rgba(13,17,23,.32),0 2px 6px rgba(0,0,0,.55) 0 24px 48px -24px rgba(0,0,0,.8));
+
+  /* type */
+  --font:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+
+  /* motion */
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+:root[data-theme="light"]{color-scheme:light}
+
+/* ---------- reset / base ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:var(--line-2) var(--bg);-webkit-text-size-adjust:100%}
+body{
+  background-color:var(--bg);
+  background-image:radial-gradient(ellipse 90% 420px at 50% -80px,
+    light-dark(rgba(22,104,214,.10),rgba(77,155,255,.13)),transparent 70%);
+  background-repeat:no-repeat;background-attachment:fixed;
+  color:var(--ink);font:15px/1.6 var(--font);-webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+::selection{background:light-dark(rgba(22,104,214,.16),rgba(77,155,255,.28));color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+b{font-weight:600}
+code{font-family:var(--mono)}
+sup{font-size:.72em;line-height:0}
+.mono{font-family:var(--mono)}
+.dim{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
+.hidden{display:none!important}
+
+/* ---------- app shell / top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:light-dark(rgba(255,255,255,.80),rgba(9,11,15,.78));
+  backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:var(--shell);margin:0 auto;padding:9px var(--gut);
+  display:flex;align-items:center;gap:14px;
+}
+.lbrand{
+  display:inline-flex;align-items:center;gap:9px;flex:none;text-decoration:none;color:var(--ink);
+  font:700 11.5px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;
+}
+.lbrand .lmark{
+  width:25px;height:25px;flex:none;display:grid;place-items:center;
+  border-radius:7px;background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent);
+}
+.lbrand .lmark svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.labnav{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-left:auto}
+.labnav a{
+  text-decoration:none;color:var(--ink-2);padding:6px 11px;border-radius:var(--r-pill);
+  font:500 12px/1 var(--mono);letter-spacing:.03em;white-space:nowrap;
+  transition:background .16s var(--ease),color .16s var(--ease),box-shadow .16s var(--ease);
+}
+.labnav a:hover{background:var(--surface-2);color:var(--ink)}
+.labnav a.on{background:var(--accent-soft);color:var(--accent);font-weight:700;box-shadow:inset 0 0 0 1px var(--accent-line)}
+.themebtn{
+  flex:none;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;
+  border-radius:var(--r-control);border:1px solid var(--line-2);
+  background:var(--surface-2);color:var(--ink-2);
+  transition:background .16s var(--ease),color .16s var(--ease),border-color .16s var(--ease);
+}
+.themebtn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.themebtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.themebtn .ico-sun{display:block}
+.themebtn .ico-moon{display:none}
+:root[data-theme="light"] .themebtn .ico-sun{display:none}
+:root[data-theme="light"] .themebtn .ico-moon{display:block}
+
+/* ---------- page frame ---------- */
+.wrap{width:100%;max-width:var(--shell);margin:0 auto;padding:var(--gut) var(--gut) 40px}
+.pagehead{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;
+  margin:0 0 26px;padding-bottom:22px;border-bottom:1px solid var(--line);
+}
+.ph-main{min-width:0;flex:1 1 320px}
+.eyebrow{
+  margin:0 0 10px;color:var(--accent);
+  font:600 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+}
+h1{margin:0;font:700 clamp(28px,3.4vw,40px)/1.08 var(--font);letter-spacing:-.032em}
+h1 em{font-style:normal;color:var(--accent)}
+.subtitle{max-width:64ch;margin:14px 0 0;color:var(--ink-2);font:16px/1.62 var(--font)}
+
+/* ---------- panels ---------- */
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);
+  box-shadow:var(--sh-2);overflow:hidden;
+}
+.phead{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:13px 20px;border-bottom:1px solid var(--line);background:var(--surface-2);
+}
+.plabel{font:600 10.5px/1.45 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}
+.plabel i,.pn,h2 i{font-style:normal;color:var(--accent);font-weight:700}
+.pbody{padding:20px}
+.badge{
+  font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+  padding:6px 11px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:var(--surface-3);color:var(--ink-2);
+}
+.badge.ok{color:var(--ok);background:var(--ok-soft);border-color:var(--ok-line)}
+.badge.bad{color:var(--err);background:var(--err-soft);border-color:var(--err-line)}
+.pill{
+  display:inline-block;padding:6px 12px;border-radius:var(--r-pill);
+  background:var(--ok-soft);border:1px solid var(--ok-line);color:var(--ok);
+  font:600 11px/1 var(--mono);letter-spacing:.06em;white-space:nowrap;
+}
+.pill.bad{background:var(--err-soft);border-color:var(--err-line);color:var(--err)}
+
+/* ---------- controls ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font:600 12.5px/1 var(--font);padding:9px 15px;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink);
+  border-radius:var(--r-control);
+  transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease),transform .1s var(--ease);
+}
+.btn svg{width:11px;height:11px;fill:currentColor;flex:none}
+.btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{background:var(--accent-hi);border-color:var(--accent-hi);color:var(--on-accent)}
+.btn.green{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.btn.green:hover{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.btn.danger{background:var(--surface-2);border-color:var(--err-line);color:var(--err)}
+.btn.danger:hover{background:var(--err-soft);border-color:var(--err);color:var(--err)}
+.btn.small{padding:6px 11px;font-size:11.5px}
+
+button.action,button.secondary,button.danger,button{
+  cursor:pointer;font:600 13.5px/1 var(--font);
+}
+input,select,textarea{
+  font:14px/1.5 var(--font);color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:var(--r-control);
+  padding:10px 12px;min-width:0;max-width:100%;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease),background .15s var(--ease);
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--accent);background:var(--surface);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:.85}
+
+/* ---------- footer ---------- */
+.foot{
+  max-width:var(--shell);margin:0 auto;padding:18px var(--gut) 34px;
+  border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font:12px/1.7 var(--font);color:var(--ink-3);
+}
+.foot b{color:var(--ink-2);font-weight:600}
+
+/* ---------- toasts ---------- */
+#toasts{
+  position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:60;
+  max-width:min(360px,calc(100vw - 32px));
+}
+.toast{
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+  padding:12px 16px;font:12.5px/1.5 var(--font);color:var(--ink);
+  border-radius:var(--r-control);box-shadow:var(--sh-3);animation:tin .25s var(--ease);
+}
+.toast.good{border-left-color:var(--ok)}
+.toast.bad{border-left-color:var(--err)}
+.toast.warn{border-left-color:var(--warn)}
+.toast.out{opacity:0;transform:translateX(12px);transition:.3s}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important; scroll-behavior:auto !important; }
+}
+
+/* ---------- exp3 · RSA laboratory ---------- */
+:root{--shell:1020px}
+
+#status{
+  font:600 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
+  padding:8px 14px;border:1px solid var(--line);border-radius:var(--r-pill);
+  background:var(--surface-2);color:var(--ink-2);
+}
+#status.ok{color:var(--ok);background:var(--ok-soft);border-color:var(--ok-line)}
+#status.busy{color:var(--accent);background:var(--accent-soft);border-color:var(--accent-line)}
+#status.err{color:var(--err);background:var(--err-soft);border-color:var(--err-line)}
+
+.panel{margin-bottom:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1;min-width:220px}
+textarea{width:100%}
+#plaintext{height:88px;font-family:var(--font);font-size:14px}
+#ciphertext{height:124px;color:var(--accent);word-break:break-all}
+#decrypted{height:80px;color:var(--ok)}
+#ioBox{height:64px}
+
+/* key / value readouts */
+.kv{display:flex;justify-content:space-between;gap:16px;font:13px/1.7 var(--font);padding:3px 0}
+.kv span{color:var(--ink-3)}
+.kv b{font:600 12.5px/1.6 var(--mono);color:var(--accent);text-align:right}
+.keybox{
+  font:11px/1.7 var(--mono);color:var(--ink-2);background:var(--surface-2);
+  border:1px solid var(--line);padding:12px 14px;max-height:132px;overflow-y:auto;
+  word-break:break-all;margin-top:9px;border-radius:var(--r-control);
+}
+.keybox .tagline{
+  color:var(--ink-3);letter-spacing:.12em;font-size:9.5px;margin-bottom:5px;text-transform:uppercase;
+}
+
+/* encrypt → decrypt flow */
+.flow{display:grid;grid-template-columns:1fr 30px 1fr;gap:14px;align-items:start;margin-top:16px}
+.arrow{align-self:center;text-align:center;color:var(--accent);font-size:20px;line-height:1}
+.side{background:var(--surface-2);border:1px solid var(--line);padding:14px 16px;border-radius:var(--r-control)}
+.side .sideh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.side .who{
+  font:600 11.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.side .who::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.side.pub .who{color:var(--accent)}
+.side.priv .who{color:var(--ok)}
+.side.priv .who::before{background:var(--ok)}
+.sidedesc{font:12.5px/1.6 var(--font);color:var(--ink-3)}
+.msg{
+  font:12.5px/1.6 var(--font);padding:11px 14px;border:1px solid var(--line);margin-top:12px;
+  display:none;border-radius:var(--r-control);background:var(--surface-2);color:var(--ink-2);
+}
+.msg.ok{display:block;color:var(--ok);background:var(--ok-soft);border-color:var(--ok-line)}
+.msg.bad{display:block;color:var(--err);background:var(--err-soft);border-color:var(--err-line)}
+.msg.info{display:block;color:var(--ink-2)}
+.hint{font:12.5px/1.75 var(--font);color:var(--ink-3);margin-top:12px}
+.hint b{color:var(--ink-2);font-weight:600}
+
+/* visual lab */
+.vizlabel{
+  font:600 9.5px/1.5 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin:16px 0 7px;
+}
+.bytegrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(26px,1fr));gap:3px;
+  background:var(--surface-2);border:1px solid var(--line);padding:8px;
+  border-radius:var(--r-control);min-height:36px;
+}
+.bcell{
+  aspect-ratio:1;display:grid;place-items:center;font:9.5px/1 var(--mono);
+  border:1px solid var(--line);color:var(--ink-3);background:var(--surface);border-radius:var(--r-atom);
+}
+.bcell.plain{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.bcell.ct{background:var(--surface-3);color:var(--ink-2);border-color:var(--line-2)}
+.bcell.dyes{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+.bcell.dno{background:var(--err-soft);color:var(--err);border-color:var(--err-line)}
+#visStat{font:12px/1.7 var(--font);color:var(--ink-2)}
+#visStat b{color:var(--accent);font-weight:600}
+
+/* toy rsa */
+.kvrow{display:flex;justify-content:space-between;gap:16px;font:13px/1.7 var(--font);padding:3px 0}
+.kvrow span{color:var(--ink-3);white-space:nowrap}
+.kvrow b{font:600 12.5px/1.6 var(--mono);color:var(--accent);text-align:right;word-break:break-all}
+.kvrow b.ok{color:var(--ok)}
+.kvrow b.blue{color:var(--accent)}
+.ladder{
+  max-height:190px;overflow-y:auto;border:1px solid var(--line);background:var(--surface-2);
+  margin-top:9px;border-radius:var(--r-control);
+}
+.ladder table{width:100%;border-collapse:collapse;font:11.5px/1.5 var(--mono)}
+.ladder td,.ladder th{padding:5px 9px;text-align:right;border-top:1px solid var(--line);color:var(--ink-2)}
+.ladder th{
+  position:sticky;top:0;background:var(--surface);font:600 9px/1.5 var(--mono);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);border-top:none;text-align:right;
+}
+.ladder td:first-child,.ladder th:first-child{text-align:left}
+.ladder td:last-child{color:var(--accent)}
+.ladder tr.final td{color:var(--ok);background:var(--ok-soft)}
+#toyAttackOut .prog{font:12px/1.6 var(--font);color:var(--accent);padding:8px 0}
+#toyAttackOut .verdict{
+  font:12.5px/1.75 var(--font);color:var(--ok);border:1px solid var(--ok-line);
+  background:var(--ok-soft);padding:12px 14px;margin-top:10px;border-radius:var(--r-control);
+}
+#toyAttackOut .verdict b{font-weight:700}
+#toyAttackOut .extrap{
+  font:12px/1.75 var(--font);color:var(--ink-2);border:1px dashed var(--line-2);
+  background:var(--surface-2);padding:12px 14px;margin-top:10px;border-radius:var(--r-control);
+}
+#toyAttackOut .extrap b{color:var(--err);font-weight:600}
+
+#fatal{
+  position:fixed;left:0;right:0;bottom:0;z-index:999;background:var(--err);color:#fff;
+  padding:12px 18px;font:12.5px/1.6 var(--font);display:none;
+}
+
+/* Only sections 01 and 02 ship visible. Later sections stay in the DOM
+   so the original JavaScript references continue to work. */
+.wrap > section.panel:nth-of-type(n+3){display:none!important}
+
+/* responsive */
+@media(max-width:760px){
+  .topbar-in{gap:8px;padding:8px var(--gut)}
+  .lbrand .ltext{display:none}
+  .labnav a{padding:6px 9px;font-size:11.5px}
+  .wrap{padding:var(--gut) 14px 30px}
+  .phead{align-items:flex-start}
+  .pbody{padding:16px}
+  .flow{grid-template-columns:1fr}
+  .arrow{transform:rotate(90deg);justify-self:center}
+  .kv,.kvrow{align-items:flex-start}
+  .kv b,.kvrow b{overflow-wrap:anywhere}
+}
+
+</style>
+<script>
+/* restore the saved theme before first paint */
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="lbrand" href="exp2.html" aria-label="Blockchain Labs — home">
+      <span class="lmark" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="1.7" y="1.7" width="12.6" height="12.6" rx="2"/><rect x="5.7" y="5.7" width="4.6" height="4.6" rx="1" fill="currentColor" stroke="none"/></svg></span>
+      <span class="ltext">Blockchain Labs</span>
+    </a>
+    <nav class="labnav" aria-label="Labs">
+      <a href="exp2.html">Mining</a>
+      <a href="exp3.html" class="on" aria-current="page">RSA</a>
+      <a href="exp4.html">Consensus</a>
+      <a href="exp6.html">RLP</a>
+      <a href="exp8.html">Merkle</a>
+    </nav>
+    <button class="themebtn" id="themeBtn" type="button" aria-label="Switch to light theme">
+      <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>
+      <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.8A8.8 8.8 0 0 1 9.2 3.5a8.8 8.8 0 1 0 11.3 11.3z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+<header class="pagehead">
+  <div class="ph-main">
+    <p class="eyebrow">Cryptography · Web Crypto API</p>
+    <h1>RSA <em>//</em> LAB</h1>
+    <p class="subtitle">Generate a key pair in the browser, encrypt and decrypt a message, and watch OAEP's randomness make every ciphertext a different one.</p>
+  </div>
+  <span id="status">BOOTING</span>
+</header>
+
+<!-- 01 keys -->
+<section class="panel">
+  <div class="phead">
+    <span class="plabel"><i>01</i> · Key Pair — RSA-OAEP, generated in your browser</span>
+    <div class="row">
+      <select id="keySize">
+        <option value="2048" selected>2048-bit</option>
+        <option value="3072">3072-bit</option>
+        <option value="4096">4096-bit</option>
+      </select>
+      <button id="btnGen" class="btn primary">Generate Keys</button>
+    </div>
+  </div>
+  <div class="pbody">
+    <div class="kv"><span>algorithm</span><b>RSA-OAEP · SHA-256</b></div>
+    <div class="kv"><span>key size</span><b id="kBits">—</b></div>
+    <div class="kv"><span>generation time</span><b id="kTime">—</b></div>
+    <div class="kv"><span>max plaintext length</span><b id="kMax">—</b></div>
+
+    <div class="flow">
+      <div class="side pub">
+        <div class="sideh"><span class="who">Public Key</span>
+          <button id="copyPub" class="btn small" disabled>Copy</button></div>
+        <div class="sidedesc">encrypts — share with anyone</div>
+        <div class="keybox"><div class="tagline">SPKI · BASE64</div><div id="pubOut">no key yet</div></div>
+      </div>
+      <div class="arrow">⇄</div>
+      <div class="side priv">
+        <div class="sideh"><span class="who">Private Key</span>
+          <button id="copyPriv" class="btn small" disabled>Copy</button></div>
+        <div class="sidedesc">decrypts — never leaves this page</div>
+        <div class="keybox"><div class="tagline">PKCS#8 · BASE64</div><div id="privOut">no key yet</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 encrypt/decrypt -->
+<section class="panel">
+  <div class="phead"><span class="plabel"><i>02</i> · Encrypt → Decrypt round trip</span></div>
+  <div class="pbody">
+    <textarea id="plaintext" placeholder="type a message to encrypt…">The quick brown fox jumps over the lazy dog.</textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="btnEnc" class="btn" disabled>Encrypt with Public Key</button>
+      <button id="btnRand" class="btn small">Random Message</button>
+      <span class="grow"></span>
+      <span class="hint" style="margin:0" id="lenInfo"></span>
+    </div>
+    <div style="margin-top:12px">
+      <div class="plabel" style="margin-bottom:6px">ciphertext · RSA-OAEP output, base64</div>
+      <textarea id="ciphertext" readonly placeholder="ciphertext appears here…"></textarea>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnDec" class="btn green" disabled>Decrypt with Private Key</button>
+      <button id="btnCopyDec" class="btn small" disabled>Copy Result</button>
+    </div>
+    <textarea id="decrypted" readonly placeholder="decrypted result appears here…" style="margin-top:10px;height:74px;color:var(--ok)"></textarea>
+    <div class="kv"><span>timings</span><b id="tOut">—</b></div>
+    <div id="msg" class="msg"></div>
+    <div class="hint">
+      <b>what's happening:</b> OAEP padding randomizes each encryption — encrypt the same message twice and the ciphertext differs, yet both decrypt to the same plaintext. RSA can only encrypt up to <b>keysize/8 − 2·hashsize − 2</b> bytes (190 B at 2048-bit). Section 03 visualizes exactly this randomness.
+    </div>
+  </div>
+</section>
+
+<!-- 03 VISUAL LAB -->
+<section class="panel">
+  <div class="phead">
+    <span class="plabel"><i>03</i> · Visual Lab — watch the same message encrypt differently every time</span>
+    <div class="row">
+      <button id="btnVisEnc" class="btn small primary" disabled>Encrypt Sample ×2</button>
+      <button id="btnVisAgain" class="btn small" disabled>Re-encrypt #2</button>
+    </div>
+  </div>
+  <div class="pbody">
+    <div class="vizlabel">plaintext · UTF-8 bytes</div>
+    <div id="visPlain" class="bytegrid"><span class="hint" style="grid-column:1/-1;margin:0">press ENCRYPT SAMPLE ×2 (needs keys from section 01)</span></div>
+    <div class="vizlabel">ciphertext #1</div>
+    <div id="visCt1" class="bytegrid"></div>
+    <div class="vizlabel">ciphertext #2 — identical message, fresh OAEP randomness</div>
+    <div id="visCt2" class="bytegrid"></div>
+    <div class="vizlabel">diff — green = byte changed between runs · red = happened to match</div>
+    <div id="visDiff" class="bytegrid"></div>
+    <div class="row" style="margin-top:10px"><span id="visStat"></span></div>
+    <div class="hint">
+      Both ciphertexts decrypt to the <b>same</b> plaintext with the private key — verify it in section 02 by pasting either one into the ciphertext box. The hidden ingredient is OAEP's random padding: the library takes your short message and mixes in fresh random bytes up to the full block width, so every run inputs different data even though <i>you</i> typed the same thing.
+    </div>
+  </div>
+</section>
+
+<!-- 04 TOY RSA -->
+<section class="panel">
+  <div class="phead">
+    <span class="plabel"><i>04</i> · Toy RSA — the actual math, with small numbers you can watch</span>
+    <div class="row">
+      <select id="toyBits">
+        <option value="8">8-bit primes</option>
+        <option value="10" selected>10-bit primes</option>
+        <option value="12">12-bit primes</option>
+        <option value="16">16-bit primes</option>
+      </select>
+      <button id="btnToyGen" class="btn small primary">Generate Toy Keys</button>
+    </div>
+  </div>
+  <div class="pbody">
+    <div class="kvrow"><span>p · first prime (secret)</span><b id="toyP">—</b></div>
+    <div class="kvrow"><span>q · second prime (secret)</span><b id="toyQ">—</b></div>
+    <div class="kvrow"><span>n = p·q · the modulus (public)</span><b id="toyN">—</b></div>
+    <div class="kvrow"><span>φ(n) = (p−1)(q−1) · secret</span><b id="toyPhi">—</b></div>
+    <div class="kvrow"><span>e · public exponent</span><b id="toyE">—</b></div>
+    <div class="kvrow"><span>d = e⁻¹ mod φ · the private key (secret)</span><b id="toyD">—</b></div>
+
+    <div class="row" style="margin-top:14px">
+      <span class="hint" style="margin:0">message m (0 &lt; m &lt; n):</span>
+      <input type="number" id="toyM" value="42" min="1" style="width:120px">
+      <button id="btnToyEnc" class="btn small" disabled>Encrypt m</button>
+    </div>
+    <div id="toyEncOut"></div>
+
+    <div class="row" style="margin-top:12px">
+      <button id="btnToyDec" class="btn small green" disabled>Decrypt c with d</button>
+      <button id="btnToyAttack" class="btn small danger" disabled>Attack: factor n</button>
+    </div>
+    <div id="toyDecOut"></div>
+    <div id="toyAttackOut"></div>
+
+    <div class="hint">
+      <b>why this matters:</b> textbook RSA is deterministic — encrypt the same m twice and you get the <i>same</i> c (contrast with section 03). Security rests entirely on one assumption: from n and e alone, you cannot find d without factoring n. Press the attack button — your machine will crack these toy keys in milliseconds, then report how long the same brute force would need against a real 2048-bit modulus.
+    </div>
+  </div>
+</section>
+
+<!-- 05 import/export -->
+<section class="panel">
+  <div class="phead"><span class="plabel"><i>05</i> · Import / Export — round-trip keys through base64</span></div>
+  <div class="pbody">
+    <div class="row">
+      <button id="btnExport" class="btn small" disabled>Export Pair to Text Box</button>
+      <button id="btnImport" class="btn small" disabled>Import From Text Box</button>
+      <button id="btnWipe" class="btn small">Wipe Keys</button>
+    </div>
+    <textarea id="ioBox" placeholder="export writes both base64 keys here (JSON)…" style="margin-top:10px;height:64px"></textarea>
+  </div>
+</section>
+
+</main>
+<footer class="foot">
+  <span><b>Keys stay here.</b> Generated in your browser — the private key never leaves this page.</span>
+  <span><b>Note.</b> Web Crypto needs a secure context: serve over http://localhost or open the file directly.</span>
+</footer>
+<div id="toasts"></div>
+<div id="fatal"></div>
+
+<script>
+(()=>{
+'use strict';
+window.addEventListener('error',e=>{
+  const f=document.getElementById('fatal');
+  f.style.display='block';
+  f.textContent='Script error: '+e.message;
+});
+
+const $=s=>document.querySelector(s);
+const enc=new TextEncoder(), dec=new TextDecoder();
+
+/* ---------- base64 helpers ---------- */
+function bufToB64(buf){
+  const b=new Uint8Array(buf);let s='';
+  for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));
+  return btoa(s);
+}
+function b64ToBuf(b64){
+  const s=atob(b64.trim()),b=new Uint8Array(s.length);
+  for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);
+  return b.buffer;
+}
+function toast(msg,kind){
+  const t=document.createElement('div');
+  t.className='toast '+(kind||'');t.textContent=msg;
+  $('#toasts').append(t);
+  setTimeout(()=>{t.style.opacity=0;t.style.transition='.3s';setTimeout(()=>t.remove(),350);},3600);
+}
+function showMsg(text,kind){
+  const m=$('#msg');m.textContent=text;m.className='msg '+(kind||'');
+}
+function setStatus(text,kind){
+  const s=$('#status');s.textContent=text;s.className=kind||'';
+}
+
+/* ---------- secure-context check ---------- */
+function fatal(html){
+  const f=$('#fatal');f.style.display='block';f.innerHTML=html;
+  setStatus('UNAVAILABLE','err');
+}
+if(!window.crypto||!crypto.subtle||!crypto.subtle.generateKey){
+  fatal('<b>crypto.subtle is not available in this context.</b> '+
+    'Serve the file locally: run <b>python -m http.server 8000</b>, open <b>http://localhost:8000</b>, '+
+    'or open the file directly in a current browser.');
+  return;
+}
+
+/* ---------- state ---------- */
+let keyPair=null;
+const FMT_PUB='spki', FMT_PRIV='pkcs8';
+function maxPlain(bits){return bits/8 - 2*32 - 2;}
+function setEnabled(on){
+  $('#btnEnc').disabled=!on;
+  $('#btnDec').disabled=!(on && $('#ciphertext').value);
+  $('#copyPub').disabled=!on; $('#copyPriv').disabled=!on;
+  $('#btnExport').disabled=!on; $('#btnImport').disabled=!on;
+  $('#btnVisEnc').disabled=!on;
+  $('#btnVisAgain').disabled=!on;
+}
+
+/* ================= 01 · generate ================= */
+async function generate(){
+  const bits=+$('#keySize').value;
+  setStatus('GENERATING '+bits+'-BIT KEY…','busy');
+  $('#btnGen').disabled=true;
+  showMsg('prime hunting in progress…','info');
+  await new Promise(r=>setTimeout(r,30));
+  try{
+    const t0=performance.now();
+    keyPair=await crypto.subtle.generateKey(
+      {name:'RSA-OAEP',modulusLength:bits,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},
+      true,['encrypt','decrypt']);
+    const ms=performance.now()-t0;
+    const [pub,priv]=await Promise.all([
+      crypto.subtle.exportKey(FMT_PUB,keyPair.publicKey),
+      crypto.subtle.exportKey(FMT_PRIV,keyPair.privateKey)
+    ]);
+    $('#pubOut').textContent=bufToB64(pub);
+    $('#privOut').textContent=bufToB64(priv);
+    $('#kBits').textContent=bits+'-bit modulus · 65537 public exponent';
+    $('#kTime').textContent=ms<1000?ms.toFixed(0)+' ms':(ms/1000).toFixed(2)+' s';
+    $('#kMax').textContent=maxPlain(bits)+' bytes of plaintext';
+    $('#ciphertext').value=''; $('#decrypted').value='';
+    setEnabled(true); setStatus('KEYS READY','ok');
+    showMsg('key pair ready. ENCRYPT uses the public key, DECRYPT the private key.','ok');
+    $('#lenInfo').textContent='';
+  }catch(err){
+    setStatus('ERROR','err');
+    showMsg('key generation failed: '+(err&&err.name?err.name+' — ':'')+err.message,'bad');
+  }
+  $('#btnGen').disabled=false;
+}
+
+/* ================= 02 · encrypt / decrypt ================= */
+async function encrypt(){
+  if(!keyPair)return;
+  const text=$('#plaintext').value;
+  if(!text){showMsg('type a message first','bad');return;}
+  const bytes=enc.encode(text);
+  const cap=maxPlain(+$('#keySize').value);
+  if(bytes.length>cap){showMsg('message too long: '+bytes.length+' B > '+cap+' B limit','bad');return;}
+  try{
+    const t0=performance.now();
+    const ct=await crypto.subtle.encrypt({name:'RSA-OAEP'},keyPair.publicKey,bytes);
+    const ms=performance.now()-t0;
+    $('#ciphertext').value=bufToB64(ct);
+    $('#decrypted').value='';
+    $('#btnDec').disabled=false; $('#btnCopyDec').disabled=false;
+    $('#lenInfo').textContent=bytes.length+' B in → '+ct.byteLength+' B out';
+    $('#tOut').textContent='encrypt '+ms.toFixed(2)+' ms';
+    showMsg('encrypted with the PUBLIC key — same input yields different output every time (OAEP randomness).','ok');
+  }catch(err){showMsg('encryption failed: '+err.message,'bad');}
+}
+async function decrypt(){
+  if(!keyPair||!$('#ciphertext').value)return;
+  try{
+    const t0=performance.now();
+    const pt=await crypto.subtle.decrypt({name:'RSA-OAEP'},keyPair.privateKey,b64ToBuf($('#ciphertext').value));
+    const ms=performance.now()-t0;
+    const text=dec.decode(pt);
+    $('#decrypted').value=text;
+    $('#tOut').textContent+=' · decrypt '+ms.toFixed(2)+' ms';
+    if(text===$('#plaintext').value)showMsg('round trip VERIFIED — output matches the original plaintext.','ok');
+    else showMsg('decrypted — output differs from the input box (you edited it after encrypting).','info');
+  }catch(err){
+    showMsg('decryption FAILED: '+err.message+' — wrong key or corrupted ciphertext.','bad');
+  }
+}
+
+/* ================= 03 · VISUAL LAB ================= */
+let visMsg=null, visCt1=null;
+function renderBytes(elm,bytes,kind){
+  elm.innerHTML='';
+  const frag=document.createDocumentFragment();
+  for(const b of bytes){
+    const c=document.createElement('div');
+    c.className='bcell '+kind;
+    c.textContent=b.toString(16).padStart(2,'0');
+    c.title='byte '+b+' ('+b.toString(2).padStart(8,'0')+')';
+    frag.append(c);
+  }
+  elm.append(frag);
+}
+function drawDiff(a,b){
+  const g=$('#visDiff');g.innerHTML='';
+  let same=0;
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<a.length;i++){
+    const eq=a[i]===b[i]; if(eq)same++;
+    const c=document.createElement('div');
+    c.className='bcell '+(eq?'dno':'dyes');
+    frag.append(c);
+  }
+  g.append(frag);
+  return a.length-same;
+}
+async function visEncrypt(){
+  if(!keyPair)return;
+  const cap=maxPlain(+$('#keySize').value);
+  const all=enc.encode($('#plaintext').value||'hello');
+  visMsg=all.length>cap?all.slice(0,cap):all;
+  const c1=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},keyPair.publicKey,visMsg));
+  const c2=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},keyPair.publicKey,visMsg));
+  visCt1=c1;
+  renderBytes($('#visPlain'),visMsg,'plain');
+  renderBytes($('#visCt1'),c1,'ct');
+  renderBytes($('#visCt2'),c2,'ct');
+  const changed=drawDiff(c1,c2);
+  $('#visStat').innerHTML=visMsg.length+' B message → <b>'+c1.length+' B</b> ciphertext each · '+
+    '<b>'+changed+'/'+c1.length+'</b> bytes changed between runs ('+(changed*100/c1.length).toFixed(1)+'%) — '+
+    (changed===c1.length?'a perfect avalanche of randomness':'essentially unrelated outputs');
+}
+async function visAgain(){
+  if(!keyPair||!visMsg){visEncrypt();return;}
+  const c2=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'},keyPair.publicKey,visMsg));
+  renderBytes($('#visCt2'),c2,'ct');
+  const changed=drawDiff(visCt1,c2);
+  $('#visStat').innerHTML='re-encrypted the same '+visMsg.length+' B message → '+
+    '<b>'+changed+'/'+visCt1.length+'</b> bytes changed ('+(changed*100/visCt1.length).toFixed(1)+'%) — '+
+    'paste either ciphertext into section 02 and both decrypt to the same text';
+}
+
+/* ================= 04 · TOY RSA ================= */
+const fmtBI=b=>b.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+function modpow(base,e,m){
+  let r=1n,b=base%m;
+  while(e>0n){ if(e&1n)r=r*b%m; b=b*b%m; e>>=1n; }
+  return r;
+}
+function modpowLadder(base,e,m){
+  const steps=[]; let r=1n; const b=base%m;
+  for(const bit of e.toString(2)){
+    r=r*r%m;
+    let op='square';
+    if(bit==='1'){ r=r*b%m; op='square, then ×m'; }
+    steps.push({bit,op,val:r});
+  }
+  return {r,steps};
+}
+function gcd(a,b){ while(b){ const t=a%b; a=b; b=t; } return a; }
+function egcd(a,b){ if(b===0n)return [a,1n,0n]; const [g,x,y]=egcd(b,a%b); return [g,y,x-(a/b)*y]; }
+function inv(a,m){ const [g,x]=egcd(a%m,m); return g===1n?((x%m)+m)%m:null; }
+function randOdd(bits){
+  const bytes=new Uint8Array((bits+7)>>3);
+  crypto.getRandomValues(bytes);
+  let x=0n; for(const b of bytes)x=(x<<8n)|BigInt(b);
+  x&=(1n<<BigInt(bits))-1n;
+  x|=1n<<BigInt(bits-1); x|=1n;
+  return x;
+}
+const MR_BASES=[2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n];
+function isPrime(n){
+  if(n<2n)return false;
+  for(const p of MR_BASES){ if(n===p)return true; if(n%p===0n)return false; }
+  let d=n-1n,r=0n;
+  while(d%2n===0n){d/=2n;r++;}
+  for(const a of MR_BASES){
+    let x=modpow(a,d,n);
+    if(x===1n||x===n-1n)continue;
+    let ok=false;
+    for(let i=1n;i<r;i++){ x=x*x%n; if(x===n-1n){ok=true;break;} }
+    if(!ok)return false;
+  }
+  return true;
+}
+function genPrime(bits){
+  for(;;){ const c=randOdd(bits); if(isPrime(c))return c; }
+}
+
+const toy={p:0n,q:0n,n:0n,phi:0n,e:0n,d:0n,c:null,m:null};
+function toyGen(){
+  const bits=+$('#toyBits').value;
+  let p=genPrime(bits), q=genPrime(bits);
+  let guard=0;
+  while(q===p&&guard++<50)q=genPrime(bits);
+  toy.p=p;toy.q=q;toy.n=p*q;toy.phi=(p-1n)*(q-1n);
+  toy.e=0n;
+  for(const c of [65537n,257n,17n,5n,3n]) if(c<toy.phi&&gcd(c,toy.phi)===1n){toy.e=c;break;}
+  toy.d=inv(toy.e,toy.phi);
+  toy.c=null;toy.m=null;
+  $('#toyP').textContent=fmtBI(p);
+  $('#toyQ').textContent=fmtBI(q);
+  $('#toyN').textContent=fmtBI(toy.n)+'  ('+toy.n.toString(2).length+' bits)';
+  $('#toyPhi').textContent=fmtBI(toy.phi);
+  $('#toyE').textContent=fmtBI(toy.e);
+  $('#toyD').textContent=fmtBI(toy.d);
+  $('#toyEncOut').innerHTML='<div class="hint" style="margin-top:8px">now enter a message number m and press ENCRYPT m</div>';
+  $('#toyDecOut').innerHTML=''; $('#toyAttackOut').innerHTML='';
+  $('#btnToyEnc').disabled=false;
+  $('#btnToyDec').disabled=true;
+  $('#btnToyAttack').disabled=false;
+  toast('toy keys ready — '+toy.n.toString(2).length+'-bit modulus','good');
+}
+function toyEncrypt(){
+  if(!toy.n)return;
+  const raw=$('#toyM').value;
+  if(!raw||isNaN(+raw)){toyMsg('enter a number for m');return;}
+  const m=BigInt(Math.trunc(+raw));
+  if(m<=0n||m>=toy.n){toyMsg('m must satisfy 0 < m < n = '+toy.n);return;}
+  toy.m=m;
+  const {r,steps}=modpowLadder(m,toy.e,toy.n);
+  toy.c=r;
+  let rows='';
+  steps.forEach((s,i)=>{
+    const last=i===steps.length-1;
+    rows+='<tr'+(last?' class="final"':'')+'><td>step '+(i+1)+'</td><td>bit='+s.bit+'</td><td>'+s.op+'</td><td>'+fmtBI(s.val)+'</td></tr>';
+  });
+  $('#toyEncOut').innerHTML=
+    '<div class="vizlabel">square-and-multiply ladder · m^'+toy.e+' mod '+toy.n+' · '+steps.length+' steps ('+steps.length+' bits in e)</div>'+
+    '<div class="ladder"><table><tr><th>step</th><th>exponent bit</th><th>operation</th><th>running value (mod n)</th></tr>'+rows+'</table></div>'+
+    '<div class="kvrow" style="margin-top:8px"><span>c = m<sup>e</sup> mod n</span><b class="blue">'+fmtBI(r)+'</b></div>'+
+    '<div class="hint" style="margin-top:4px">textbook RSA is deterministic — encrypt this exact m again and you get this exact c back. The per-step cost is one BigInt multiply + one mod — same shape as the 2048-bit version, just 2000 bits smaller.</div>';
+  $('#btnToyDec').disabled=false;
+}
+function toyMsg(t){
+  $('#toyDecOut').innerHTML='<div class="hint" style="color:var(--err)">'+t+'</div>';
+}
+function toyDecrypt(){
+  if(toy.c===null){toyMsg('encrypt something first');return;}
+  const t0=performance.now();
+  const m2=modpow(toy.c,toy.d,toy.n);
+  const ms=performance.now()-t0;
+  const ok=m2===toy.m;
+  $('#toyDecOut').innerHTML=
+    '<div class="kvrow" style="margin-top:8px"><span>c<sup>d</sup> mod n ('+ms.toFixed(2)+' ms)</span><b class="'+(ok?'ok':'')+'">'+fmtBI(m2)+'</b></div>'+
+    '<div class="kvrow"><span>original m</span><b>'+fmtBI(toy.m)+'</b></div>'+
+    '<div class="kvrow"><span>round trip</span><b class="'+(ok?'ok':'')+'">'+(ok?'VERIFIED — m^ed ≡ m (mod n)':'MISMATCH')+'</b></div>';
+}
+let attacking=false;
+function toyAttack(){
+  if(!toy.n||attacking)return;
+  attacking=true;
+  $('#btnToyAttack').disabled=true;
+  const n=toy.n;
+  const out=$('#toyAttackOut');
+  out.innerHTML='<div class="prog">factoring n by trial division… <span id="atkIt">0</span> divisors tried</div>';
+  let i=2n;
+  const t0=performance.now();
+  function chunk(){
+    const tb=performance.now();
+    let found=null;
+    while(performance.now()-tb<12){
+      if(n%i===0n){found=i;break;}
+      i+=1n;
+    }
+    const it=$('#atkIt');
+    if(it)it.textContent=fmtBI(i-2n);
+    if(found||i*i>n){finish(found);}
+    else setTimeout(chunk,0);
+  }
+  function finish(found){
+    const ms=performance.now()-t0;
+    const iters=Number(i-2n);
+    const rate=iters/Math.max(ms,0.01); /* divisors per ms */
+    let html;
+    if(found){
+      const p2=found, q2=n/found;
+      const phi2=(p2-1n)*(q2-1n);
+      const d2=inv(toy.e,phi2);
+      html='<div class="verdict">CRACKED in <b>'+ms.toFixed(1)+' ms</b> after '+fmtBI(iters)+
+        ' trial divisions.<br>p = '+p2+' · q = '+q2+' (check: p·q = n ✓)<br>'+
+        'φ = '+fmtBI(phi2)+' → reconstructed private key d = '+fmtBI(d2)+
+        (d2===toy.d?' — identical to the real d. With p and q, the entire private key falls out.':'')+'</div>';
+    }else{
+      html='<div class="verdict">no factor found up to √n — is n actually a semiprime?</div>';
+    }
+    /* extrapolate to a real 2048-bit key: need ≈2^1024 trial divisions */
+    const log10ms=1024*Math.log10(2)-Math.log10(rate);
+    const log10years=log10ms-Math.log10(3.156e10);
+    const log10univ=log10years-Math.log10(1.38e10);
+    html+='<div class="extrap">your machine just managed <b>'+fmtRateN(rate)+'</b> divisors/ms on BigInt math. '+
+      'A 2048-bit modulus needs ≈2<sup>1024</sup> ≈ 10<sup>308</sup> divisions → '+
+      '<b>≈10<sup>'+log10years.toFixed(0)+'</sup> years</b> — about 10<sup>'+Math.max(0,log10univ).toFixed(0)+
+      '</sup> times the age of the universe. That gap between '+ms.toFixed(1)+' ms and 10<sup>'+log10years.toFixed(0)+
+      '</sup> years is the entire security argument of RSA. (Reality is smarter than trial division — NFS uses the number field sieve — but 2048-bit still stands.)</div>';
+    out.innerHTML=html;
+    attacking=false;
+    $('#btnToyAttack').disabled=false;
+  }
+  setTimeout(chunk,0);
+}
+function fmtRateN(r){
+  if(r<1000)return r.toFixed(0);
+  if(r<1e6)return (r/1e3).toFixed(1)+'k';
+  if(r<1e9)return (r/1e6).toFixed(1)+'M';
+  return (r/1e9).toFixed(1)+'G';
+}
+
+/* ================= 05 · import / export ================= */
+async function exportPair(){
+  const [pub,priv]=await Promise.all([
+    crypto.subtle.exportKey(FMT_PUB,keyPair.publicKey),
+    crypto.subtle.exportKey(FMT_PRIV,keyPair.privateKey)
+  ]);
+  $('#ioBox').value=JSON.stringify({
+    algorithm:'RSA-OAEP-SHA256', bits:+$('#keySize').value,
+    publicKey:bufToB64(pub), privateKey:bufToB64(priv)
+  },null,1);
+  toast('keys exported to the text box','good');
+}
+async function importPair(){
+  let obj;
+  try{obj=JSON.parse($('#ioBox').value);}
+  catch(e){showMsg('not valid JSON','bad');return;}
+  if(!obj.publicKey||!obj.privateKey){showMsg('JSON needs "publicKey" and "privateKey" base64 fields','bad');return;}
+  try{
+    const pub=await crypto.subtle.importKey('spki',b64ToBuf(obj.publicKey),{name:'RSA-OAEP',hash:'SHA-256'},true,['encrypt']);
+    const priv=await crypto.subtle.importKey('pkcs8',b64ToBuf(obj.privateKey),{name:'RSA-OAEP',hash:'SHA-256'},true,['decrypt']);
+    keyPair={publicKey:pub,privateKey:priv};
+    $('#pubOut').textContent=obj.publicKey;
+    $('#privOut').textContent=obj.privateKey;
+    const bits=obj.bits||2048;
+    $('#keySize').value=String(bits);
+    $('#kBits').textContent=bits+'-bit modulus · 65537 public exponent';
+    $('#kTime').textContent='imported'; $('#kMax').textContent=maxPlain(bits)+' bytes';
+    $('#ciphertext').value=''; $('#decrypted').value='';
+    setEnabled(true); setStatus('KEYS IMPORTED','ok');
+    showMsg('key pair imported and usable.','ok');
+  }catch(err){showMsg('import failed: '+err.message,'bad');}
+}
+
+/* ================= wiring ================= */
+function wire(){
+  $('#btnGen').onclick=generate;
+  $('#btnEnc').onclick=encrypt;
+  $('#btnDec').onclick=decrypt;
+  $('#btnExport').onclick=()=>exportPair().catch(e=>showMsg(e.message,'bad'));
+  $('#btnImport').onclick=importPair;
+  $('#btnWipe').onclick=()=>{
+    keyPair=null;
+    $('#pubOut').textContent='no key yet'; $('#privOut').textContent='no key yet';
+    $('#ciphertext').value=''; $('#decrypted').value=''; $('#ioBox').value='';
+    $('#kBits').textContent='—'; $('#kTime').textContent='—'; $('#kMax').textContent='—';
+    $('#tOut').textContent='—'; $('#lenInfo').textContent='';
+    setEnabled(false); $('#btnCopyDec').disabled=true;
+    setStatus('NO KEYS',''); showMsg('keys wiped from memory.','info');
+  };
+  $('#btnRand').onclick=()=>{
+    const words=['quantum','tunnel','cipher','nebula','orbit','prism','vector','ember','harbor','zenith','cascade','lumen'];
+    const n=3+(Math.random()*5|0),w=[];
+    for(let i=0;i<n;i++)w.push(words[Math.random()*words.length|0]);
+    $('#plaintext').value=w.join(' ')+' #'+Math.random().toString(36).slice(2,8);
+    showMsg('random message placed — encrypt twice and compare in section 03','info');
+  };
+  $('#btnCopyDec').onclick=()=>navigator.clipboard.writeText($('#decrypted').value)
+    .then(()=>toast('copied','good')).catch(()=>toast('clipboard blocked','bad'));
+  $('#copyPub').onclick=()=>navigator.clipboard.writeText($('#pubOut').textContent).then(()=>toast('public key copied','good'));
+  $('#copyPriv').onclick=()=>navigator.clipboard.writeText($('#privOut').textContent).then(()=>toast('private key copied — careful','bad'));
+  $('#ciphertext').addEventListener('input',()=>{ $('#btnDec').disabled=!$('#ciphertext').value||!keyPair; });
+
+  /* visual lab */
+  $('#btnVisEnc').onclick=visEncrypt;
+  $('#btnVisAgain').onclick=visAgain;
+
+  /* toy rsa */
+  $('#btnToyGen').onclick=toyGen;
+  $('#btnToyEnc').onclick=toyEncrypt;
+  $('#btnToyDec').onclick=toyDecrypt;
+  $('#btnToyAttack').onclick=toyAttack;
+  $('#toyM').addEventListener('keydown',e=>{ if(e.key==='Enter'&&toy.n)toyEncrypt(); });
+
+  document.addEventListener('keydown',e=>{
+    if(e.code==='Enter'&&e.ctrlKey&&!$('#btnEnc').disabled){e.preventDefault();encrypt();}
+  });
+}
+
+/* ---------- boot ---------- */
+setStatus('NO KEYS','');
+setEnabled(false);
+wire();
+showMsg('press GENERATE KEYS to begin — then explore the Visual Lab (03) and Toy RSA (04).','info');
+})();
+</script>
+
+<script>
+/* theme switch — persists across the lab pages */
+(function(){
+  var btn=document.getElementById('themeBtn');if(!btn)return;
+  var root=document.documentElement;
+  function label(){btn.setAttribute('aria-label',root.getAttribute('data-theme')==='light'?'Switch to dark theme':'Switch to light theme');}
+  label();
+  btn.addEventListener('click',function(){
+    var next=(root.getAttribute('data-theme')==='light')?'dark':'light';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('lab-theme',next);}catch(e){}
+    label();
+    window.dispatchEvent(new CustomEvent('lab:theme',{detail:next}));
+  });
+})();
+</script>
+</body>
+</html>

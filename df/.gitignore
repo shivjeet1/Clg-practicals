@@ -1,27 +1,58 @@
-# The locally installed forensic tool chain (rootless prefix) - not part of the report
-tools/
-tools/.cache/
+# Disk images and forensic dumps
+*.dd
+*.raw
+*.img
+*.iso
+*.E01
+*.aff
+*.vmdk
+*.qcow2
+*.dmg
+forensic_image.dd
+ram_dump.raw
 
-# Working files of the experiments: the large binaries are re-creatable with the
-# scripts in scripts/, the small ones are kept as evidence of the experiment.
-artifacts/exp2/usb_drive.img
-artifacts/exp2/carved.*/
-artifacts/exp2/recovered_tsk/
-artifacts/exp4/usb_drive.img
-artifacts/exp4/forensic_image.dd
-artifacts/exp4/test.dd
-artifacts/exp4/test_hash.txt
-artifacts/exp5/ram_dump.raw
-artifacts/exp6/working/
-artifacts/exp7/
-artifacts/exp8/case/export/recovered/
-artifacts/exp8/case/export/tsk.db
-artifacts/exp8/case/evidence/
+# Extracted outputs and working directories
+extraction_output_folder/
+autopsy/*/Export/
+autopsy/*/cache/
+autopsy/*/Reports/
+bulk_extractor_out*/
+recovered/
 
-artifacts/exp8/autopsy_case/
-artifacts/exp8/autopsy_case*/
-__pycache__/
-artifacts/exp2/carved*/
-artifacts/exp2/carved.*/
-artifacts/exp2/hashed/
-artifacts/exp2/photorec.log
+# Forensic tool logs and crash dumps
+hs_err_pid*.log
+*.hprof
+image_hash.txt
+
+# Windows executables/tools (if not needed in repo)
+LastActivityView.exe
+LastActivityView.chm
+lastactivityview.zip
+
+# PhotoRec session files
+photorec.se2
+photorec.ses
+
+# Build artifacts from tool source
+LiME/*.o
+LiME/*.ko
+LiME/Module.symvers
+LiME/modules.order
+LiME/.tmp_versions/
+LiME/*.mod.c
+LiME/*.mod
+
+# Java/OpenJFX local installs
+java17-openjfx-bin/
+
+# Sleuthkit Java build dirs
+sleuthkit-java/build/
+sleuthkit-java/dist/
+
+# Editor/OS junk
+*.swp
+*.swo
+*.bak
+*~
+.DS_Store
+Thumbs.db
